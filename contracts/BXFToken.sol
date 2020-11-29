@@ -20,7 +20,7 @@ contract BXFToken is Context, AccessControl, Pausable {
         uint256 directBonus;
         uint256 indirectBonus;
         uint256 founderBonus;
-        uint256 ethbackBonus;
+        uint256 cryptoRewardBonus;
         uint256 reinvestedAmount;
         uint256 withdrawnAmount;
         int256 distributionBonus;
@@ -106,7 +106,7 @@ contract BXFToken is Context, AccessControl, Pausable {
             directBonus: 0,
             indirectBonus: 0,
             founderBonus: 0,
-            ethbackBonus: 0,
+            cryptoRewardBonus: 0,
             reinvestedAmount: 0,
             withdrawnAmount: 0,
             distributionBonus: 0
@@ -186,6 +186,13 @@ contract BXFToken is Context, AccessControl, Pausable {
         msg.sender.transfer(balance);
         return balance;
     }
+    
+    
+    function payCryptoReward(address account) public payable returns(uint256) {
+        require(hasRole(MANAGER_ROLE, msg.sender), "BXFToken: must have manager role");
+        _accountsData[account].cryptoRewardBonus.add(msg.value);
+        return msg.value;
+    }
 
 
     function directBonusOf(address account) public view returns(uint256) {
@@ -203,8 +210,8 @@ contract BXFToken is Context, AccessControl, Pausable {
     }
 
 
-    function ethBackBonusOf(address account) public view returns(uint256) {
-        return _accountsData[account].ethbackBonus;
+    function cryptoRewardBonusOf(address account) public view returns(uint256) {
+        return _accountsData[account].cryptoRewardBonus;
     }
 
 
@@ -225,7 +232,7 @@ contract BXFToken is Context, AccessControl, Pausable {
 
 
     function totalBonusOf(address account) public view returns(uint256) {
-        return directBonusOf(account) + indirectBonusOf(account) + founderBonusOf(account) + ethBackBonusOf(account)
+        return directBonusOf(account) + indirectBonusOf(account) + founderBonusOf(account) + cryptoRewardBonusOf(account)
                + distributionBonusOf(account) - withdrawnAmountOf(account) - reinvestedAmountOf(account);
     }
 
@@ -252,7 +259,7 @@ contract BXFToken is Context, AccessControl, Pausable {
                 directBonus: 0,
                 indirectBonus: 0,
                 founderBonus: 0,
-                ethbackBonus: 0,
+                cryptoRewardBonus: 0,
                 reinvestedAmount: 0,
                 withdrawnAmount: 0,
                 distributionBonus: 0
