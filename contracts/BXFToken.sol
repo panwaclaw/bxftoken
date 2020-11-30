@@ -3,10 +3,11 @@
 pragma solidity ^0.7.2;
 
 
-import "https://github.com/openzeppelin/openzeppelin-solidity/contracts/access/AccessControl.sol";
-import "https://github.com/openzeppelin/openzeppelin-solidity/contracts/utils/Pausable.sol";
-import "https://github.com/openzeppelin/openzeppelin-solidity/contracts/GSN/Context.sol";
-import "https://github.com/openzeppelin/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "@openzeppelin-solidity/contracts/access/AccessControl.sol";
+import "@openzeppelin-solidity/contracts/utils/Pausable.sol";
+import "@openzeppelin-solidity/contracts/utils/EnumerableSet.sol";
+import "@openzeppelin-solidity/contracts/GSN/Context.sol";
+import "@openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
 contract BXFToken is Context, AccessControl, Pausable {
@@ -43,6 +44,9 @@ contract BXFToken is Context, AccessControl, Pausable {
     uint256 private _totalSupply = 0;
     uint256 internal _profitPerShare;
 
+    uint256 public _companyBalance = 0;
+    uint256 public _cryptoRewardPayoutServiceBalance = 0;
+
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
@@ -64,7 +68,7 @@ contract BXFToken is Context, AccessControl, Pausable {
     Rank[] internal AFFILIATE_RANKS;
 
     
-     event Buy(
+    event Buy(
         address indexed account,
         uint256 incomingEthereum,
         uint256 tokensMinted
@@ -82,10 +86,25 @@ contract BXFToken is Context, AccessControl, Pausable {
         uint256 tokensMinted
     );
 
-    
     event Withdraw(
         address indexed account,
         uint256 ethereumWithdrawn
+    );
+
+    event CryptoReward(
+        address indexed account,
+        uint256 ethereumPaid,
+        string indexed payoutName
+    );
+
+    event CompanyWithdraw(
+        address indexed account,
+        uint256 amount
+    );
+
+    event CryptoRewardPayoutServiceRefill(
+        address indexed account,
+        uint256 amount
     );
     
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -176,22 +195,40 @@ contract BXFToken is Context, AccessControl, Pausable {
     
     
     function companyBalance() public view returns(uint256) {
-        return founderBonusOf(address(this));
+        return _companyBalance;
     }
-    
-    
-    function withdrawCompanyBalance() public returns(uint256) {
-        require(hasRole(MANAGER_ROLE, msg.sender), "BXFToken: must have manager role");
-        uint256 balance = companyBalance();
-        msg.sender.transfer(balance);
-        return balance;
+
+
+    function cryptoRewardPayoutServiceBalance() public view returns(uint256) {
+        return _cryptoRewardPayoutServiceBalance;
     }
-    
-    
-    function payCryptoReward(address account) public payable returns(uint256) {
+
+
+    function withdrawCompanyBalance(uint256 amount) public {
         require(hasRole(MANAGER_ROLE, msg.sender), "BXFToken: must have manager role");
-        _accountsData[account].cryptoRewardBonus.add(msg.value);
-        return msg.value;
+        require(amount <= _companyBalance, "BXFToken: insufficient company balance");
+        msg.sender.transfer(amount);
+        _companyBalance.sub(amount);
+
+        emit CompanyWithdraw(msg.sender, amount);
+    }
+
+
+    function refillCryptoRewardPayoutServiceBalance() public payable {
+        require(hasRole(MANAGER_ROLE, msg.sender), "BXFToken: must have manager role");
+        _cryptoRewardPayoutServiceBalance.add(msg.value);
+
+        emit CryptoRewardPayoutServiceRefill(msg.sender, msg.value);
+    }
+
+
+    function payCryptoReward(address account, uint256 amount, string memory payoutName) public {
+        require(hasRole(MANAGER_ROLE, msg.sender), "BXFToken: must have manager role");
+        require(amount <= _cryptoRewardPayoutServiceBalance, "BXFToken: insufficient CryptoReward payout service balance");
+        _accountsData[account].cryptoRewardBonus.add(amount);
+        _cryptoRewardPayoutServiceBalance.sub(amount);
+
+        emit CryptoReward(account, amount, payoutName);
     }
 
 
@@ -373,7 +410,7 @@ contract BXFToken is Context, AccessControl, Pausable {
         uint256 distributedBonus = SafeMath.div(SafeMath.mul(amountOfEthereum, DISTRIBUTION_FEE), 100);
 
         taxedEthereum.sub(companyFee);
-        _accountsData[address(this)].founderBonus.add(companyFee);
+        _companyBalance.add(companyFee);
 
         if (_founderAccounts.length() > 0) {
             taxedEthereum.sub(founderBonus);
@@ -520,20 +557,7 @@ contract BXFToken is Context, AccessControl, Pausable {
         return true;
     }
 
-    /**
-     * @dev Moves tokens `amount` from `sender` to `recipient`.
-     *
-     * This is internal function is equivalent to {transfer}, and can be used to
-     * e.g. implement automatic token fees, slashing mechanisms, etc.
-     *
-     * Emits a {Transfer} event.
-     *
-     * Requirements:
-     *
-     * - `sender` cannot be the zero address.
-     * - `recipient` cannot be the zero address.
-     * - `sender` must have a balance of at least `amount`.
-     */
+    
     function _transfer(address sender, address recipient, uint256 amount) internal virtual {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
