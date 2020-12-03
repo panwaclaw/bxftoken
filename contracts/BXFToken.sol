@@ -62,7 +62,7 @@ contract BXFToken is Context, AccessControl, Pausable {
     uint256 constant internal DISTRIBUTION_FEE = 7;
     uint256 constant internal MAGNITUDE = 2 ** 64;
 
-    uint256 internal minimumSelfBuy = 0.05 ether;
+    uint256 internal minimumSelfBuyForDirectBonus = 0.05 ether;
 
 
     Rank[] internal AFFILIATE_RANKS;
@@ -274,7 +274,7 @@ contract BXFToken is Context, AccessControl, Pausable {
     }
 
     function setMinimumSelfBuyForDirectBonus(uint256 amount) public {
-        minimumSelfBuy = amount;
+        minimumSelfBuyForDirectBonus = amount;
     }
 
     function registerAccount(address account, address sponsor) public returns(bool) {
@@ -357,7 +357,6 @@ contract BXFToken is Context, AccessControl, Pausable {
         AccountData storage accountData = _accountsData[msg.sender];
         uint256 amountToReinvest = totalBonusOf(msg.sender);
 
-        accountData.distributionBonus += (int256) (distributionBonusOf(msg.sender) * MAGNITUDE);
         accountData.reinvestedAmount += amountToReinvest;
 
         uint256 amountOfTokens = purchaseTokens(amountToReinvest);
@@ -420,7 +419,7 @@ contract BXFToken is Context, AccessControl, Pausable {
         address account = msg.sender;
         address sponsor = _accountsData[account].sponsor;
         _accountsData[account].selfBuy.add(amountOfEthereum);
-        if (sponsor != address(this)) {
+        if (sponsor != address(this) && _accountsData[sponsor].selfBuy > minimumSelfBuyForDirectBonus) {
             _accountsData[sponsor].directBonus.add(directBonus);
             taxedEthereum.sub(directBonus);
         }
