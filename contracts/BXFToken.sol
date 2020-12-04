@@ -117,6 +117,10 @@ contract BXFToken is Context, AccessControl, Pausable {
         require(hasAccount(msg.sender), "BXFToken: account must be registered by manager first");
         _;
     }
+
+    function hasRegistered(address account) public view returns(bool) {
+        return _registeredAccounts.contains(account);
+    }
     
     
     function name() public view returns (string memory) {
