@@ -45,7 +45,6 @@ contract BXFToken is Context, AccessControl, Pausable {
     uint256 internal _profitPerShare;
 
     uint256 public _companyBalance = 0;
-    uint256 public _cryptoRewardPayoutServiceBalance = 0;
 
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
@@ -68,45 +67,13 @@ contract BXFToken is Context, AccessControl, Pausable {
     Rank[] internal AFFILIATE_RANKS;
 
     
-    event Buy(
-        address indexed account,
-        uint256 incomingEthereum,
-        uint256 tokensMinted
-    );
-
-    event Sell(
-        address indexed account,
-        uint256 tokensBurned,
-        uint256 ethereumEarned
-    );
-
-    event Reinvestment(
-        address indexed account,
-        uint256 ethereumReinvested,
-        uint256 tokensMinted
-    );
-
-    event Withdraw(
-        address indexed account,
-        uint256 ethereumWithdrawn
-    );
-
-    event CryptoReward(
-        address indexed account,
-        uint256 ethereumPaid,
-        string indexed payoutName
-    );
-
-    event CompanyWithdraw(
-        address indexed account,
-        uint256 amount
-    );
-
-    event CryptoRewardPayoutServiceRefill(
-        address indexed account,
-        uint256 amount
-    );
-    
+    event Buy(address indexed account, uint256 incomingEthereum, uint256 tokensMinted);
+    event Sell(address indexed account, uint256 tokensBurned, uint256 ethereumEarned);
+    event Reinvestment(address indexed account, uint256 ethereumReinvested, uint256 tokensMinted);
+    event Withdraw(address indexed account, uint256 ethereumWithdrawn);
+    event CryptoReward(address indexed account, uint256 ethereumPaid);
+    event CompanyWithdraw(address indexed account, uint256 amount);
+    event AccountRegistration(address indexed account, address indexed sponsor);
     event Transfer(address indexed from, address indexed to, uint256 value);
 
 
@@ -147,7 +114,7 @@ contract BXFToken is Context, AccessControl, Pausable {
 
 
     modifier isRegistered() {
-        require(_registeredAccounts.contains(msg.sender), "BXFToken: account must be registered by manager first");
+        require(hasAccount(msg.sender), "BXFToken: account must be registered by manager first");
         _;
     }
     
@@ -214,21 +181,11 @@ contract BXFToken is Context, AccessControl, Pausable {
     }
 
 
-    function refillCryptoRewardPayoutServiceBalance() public payable {
+    function payCryptoReward(address account) public payable {
         require(hasRole(MANAGER_ROLE, msg.sender), "BXFToken: must have manager role");
-        _cryptoRewardPayoutServiceBalance.add(msg.value);
+        _accountsData[account].cryptoRewardBonus.add(msg.value);
 
-        emit CryptoRewardPayoutServiceRefill(msg.sender, msg.value);
-    }
-
-
-    function payCryptoReward(address account, uint256 amount, string memory payoutName) public {
-        require(hasRole(MANAGER_ROLE, msg.sender), "BXFToken: must have manager role");
-        require(amount <= _cryptoRewardPayoutServiceBalance, "BXFToken: insufficient CryptoReward payout service balance");
-        _accountsData[account].cryptoRewardBonus.add(amount);
-        _cryptoRewardPayoutServiceBalance.sub(amount);
-
-        emit CryptoReward(account, amount, payoutName);
+        emit CryptoReward(account, msg.value);
     }
 
 
@@ -277,16 +234,19 @@ contract BXFToken is Context, AccessControl, Pausable {
         minimumSelfBuyForDirectBonus = amount;
     }
 
-    function registerAccount(address account, address sponsor) public returns(bool) {
-        //require(hasRole(MANAGER_ROLE, msg.sender), "BXFToken: must have manager role");
+    function hasAccount(address account) public view returns(bool) {
+        return _registeredAccounts.contains(account);
+    }
+
+    function registerAccount(address sponsor) public returns(bool) {
         if (sponsor == address(0)) {
             sponsor = address(this);
         }
         if (sponsor != address(this)) {
             require(_registeredAccounts.contains(sponsor), "BXFToken: there's no such sponsor, consider joining with existing sponsor account or contract itself");
         }
-        if (_registeredAccounts.contains(account)) {
-            _accountsData[account] = AccountData({
+        if (!hasAccount(msg.sender)) {
+            _accountsData[msg.sender] = AccountData({
                 sponsor: sponsor,
                 balance: 0,
                 rank: 0,
@@ -301,7 +261,9 @@ contract BXFToken is Context, AccessControl, Pausable {
                 withdrawnAmount: 0,
                 distributionBonus: 0
             });
-            return _registeredAccounts.add(account);
+            _registeredAccounts.add(msg.sender);
+
+            emit AccountRegistration(msg.sender, sponsor);
         }
         return false;
     }
@@ -323,6 +285,10 @@ contract BXFToken is Context, AccessControl, Pausable {
 
         _totalSupply.sub(amountOfTokens);
         accountData.balance.sub(amountOfTokens);
+
+        if (isFounder(msg.sender)) {
+            _founderAccounts.remove(account);
+        }
 
         int256 distributedBonusUpdate = (int256) (_profitPerShare * amountOfTokens + (taxedEthereum * MAGNITUDE));
         accountData.distributionBonus -= distributedBonusUpdate;
