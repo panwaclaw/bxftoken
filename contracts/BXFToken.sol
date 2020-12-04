@@ -285,7 +285,7 @@ contract BXFToken is Context, AccessControl, Pausable {
         if (sponsor != address(this)) {
             require(_registeredAccounts.contains(sponsor), "BXFToken: there's no such sponsor, consider joining with existing sponsor account or contract itself");
         }
-        if (_registeredAccounts.contains(account)) {
+        if (!_registeredAccounts.contains(account)) {
             _accountsData[account] = AccountData({
                 sponsor: sponsor,
                 balance: 0,
