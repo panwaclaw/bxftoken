@@ -3,11 +3,11 @@
 pragma solidity ^0.7.2;
 
 
-import "@openzeppelin-solidity/contracts/access/AccessControl.sol";
-import "@openzeppelin-solidity/contracts/utils/Pausable.sol";
-import "@openzeppelin-solidity/contracts/utils/EnumerableSet.sol";
-import "@openzeppelin-solidity/contracts/GSN/Context.sol";
-import "@openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import "@openzeppelin/contracts/GSN/Context.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 
 contract BXFToken is Context, AccessControl, Pausable {
