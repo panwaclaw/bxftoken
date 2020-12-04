@@ -357,7 +357,6 @@ contract BXFToken is Context, AccessControl, Pausable {
         AccountData storage accountData = _accountsData[msg.sender];
         uint256 amountToReinvest = totalBonusOf(msg.sender);
 
-        accountData.distributionBonus += (int256) (distributionBonusOf(msg.sender) * MAGNITUDE);
         accountData.reinvestedAmount += amountToReinvest;
 
         uint256 amountOfTokens = purchaseTokens(amountToReinvest);
@@ -420,7 +419,7 @@ contract BXFToken is Context, AccessControl, Pausable {
         address account = msg.sender;
         address sponsor = _accountsData[account].sponsor;
         _accountsData[account].selfBuy.add(amountOfEthereum);
-        if (sponsor != address(this)) {
+        if (sponsor != address(this) && _accountsData[sponsor].selfBuy > minimumSelfBuy) {
             _accountsData[sponsor].directBonus.add(directBonus);
             taxedEthereum.sub(directBonus);
         }
