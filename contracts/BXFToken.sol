@@ -170,11 +170,6 @@ contract BXFToken is Context, AccessControl, Pausable {
     }
 
 
-    function cryptoRewardPayoutServiceBalance() public view returns(uint256) {
-        return _cryptoRewardPayoutServiceBalance;
-    }
-
-
     function withdrawCompanyBalance(uint256 amount) public {
         require(hasRole(MANAGER_ROLE, msg.sender), "BXFToken: must have manager role");
         require(amount <= _companyBalance, "BXFToken: insufficient company balance");
@@ -291,7 +286,7 @@ contract BXFToken is Context, AccessControl, Pausable {
         accountData.balance.sub(amountOfTokens);
 
         if (isFounder(msg.sender)) {
-            _founderAccounts.remove(account);
+            _founderAccounts.remove(msg.sender);
         }
 
         int256 distributedBonusUpdate = (int256) (_profitPerShare * amountOfTokens + (taxedEthereum * MAGNITUDE));
