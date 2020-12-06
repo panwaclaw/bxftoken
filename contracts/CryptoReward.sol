@@ -7,13 +7,13 @@ import "./AccessControlRoles.sol";
 import "./MultiLevelTreeAccountStorage.sol";
 
 
-contract CryptoReward is MultiLevelTreeAccountStorage, AccessControl, AccessControlRoles {
-    event CryptoReward(address indexed account, uint256 ethereumPaid);
+contract CryptoReward is MultiLevelTreeAccountStorage, AccessControlRoles {
+    event PaidCryptoReward(address indexed account, uint256 ethereumPaid);
 
     function payCryptoReward(address account) public payable {
         require(hasRole(MANAGER_ROLE, msg.sender), "BXFToken: must have manager role");
         addCryptoRewardBonusTo(account, msg.value);
 
-        emit CryptoReward(account, msg.value);
+        emit PaidCryptoReward(account, msg.value);
     }
 }

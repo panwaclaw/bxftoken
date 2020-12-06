@@ -6,9 +6,10 @@ import "@openzeppelin/contracts/GSN/Context.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
+import "./AccessControlRoles.sol";
 
 
-contract StandardToken is Context, AccessControl, Pausable {
+contract StandardToken is Context, AccessControl, Pausable, AccessControlRoles {
     using SafeMath for uint256;
     uint256 private _totalSupply = 0;
 
@@ -42,6 +43,19 @@ contract StandardToken is Context, AccessControl, Pausable {
     function totalSupply() public view returns (uint256) {
         return _totalSupply;
     }
+
+
+    function pause() public virtual {
+        require(hasRole(PAUSER_ROLE, msg.sender), "ERC20PresetMinterPauser: must have pauser role to pause");
+        _pause();
+    }
+
+
+    function unpause() public virtual {
+        require(hasRole(PAUSER_ROLE, msg.sender), "ERC20PresetMinterPauser: must have pauser role to unpause");
+        _unpause();
+    }
+
 
     function setTotalSupply(uint256 amount) internal {
         _totalSupply = amount;

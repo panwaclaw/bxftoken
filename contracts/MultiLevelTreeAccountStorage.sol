@@ -2,11 +2,13 @@
 
 pragma solidity ^0.7.2;
 
-import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import "./LimitedPreSale.sol";
 
 
-contract MultiLevelTreeAccountStorage {
+contract MultiLevelTreeAccountStorage is AccessControl {
 
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeMath for uint256;
@@ -35,28 +37,32 @@ contract MultiLevelTreeAccountStorage {
         uint256 splitRulePercent;
     }
 
+    uint256 constant private DIRECT_FEE = 10;
+    uint256 private minimumSelfBuyForDirectBonus = 0.05 ether;
+
     EnumerableSet.AddressSet private _accounts;
     mapping (address => AccountData) private _accountsData;
     Rank[] private AFFILIATE_RANKS;
 
     event AccountCreation(address indexed account, address indexed sponsor);
+    event MinimumSelfBuyForDirectBonusUpdate(uint256 amount);
 
 
     constructor() {
         _accountsData[msg.sender] = AccountData({
-        sponsor: address(0),
-        balance: 0,
-        rank: 0,
-        selfBuy: 0,
-        turnover: 0,
-        maxChildTurnover: 0,
-        directBonus: 0,
-        indirectBonus: 0,
-        founderBonus: 0,
-        cryptoRewardBonus: 0,
-        reinvestedAmount: 0,
-        withdrawnAmount: 0,
-        distributionBonus: 0
+            sponsor: address(0),
+            balance: 0,
+            rank: 0,
+            selfBuy: 0,
+            turnover: 0,
+            maxChildTurnover: 0,
+            directBonus: 0,
+            indirectBonus: 0,
+            founderBonus: 0,
+            cryptoRewardBonus: 0,
+            reinvestedAmount: 0,
+            withdrawnAmount: 0,
+            distributionBonus: 0
         });
 
         AFFILIATE_RANKS.push(Rank("User",         0 ether,   0 ether,    0,  100));
@@ -92,19 +98,19 @@ contract MultiLevelTreeAccountStorage {
         }
         if (!hasAccount(msg.sender)) {
             _accountsData[msg.sender] = AccountData({
-            sponsor: sponsor,
-            balance: 0,
-            rank: 0,
-            selfBuy: 0,
-            turnover: 0,
-            maxChildTurnover: 0,
-            directBonus: 0,
-            indirectBonus: 0,
-            founderBonus: 0,
-            cryptoRewardBonus: 0,
-            reinvestedAmount: 0,
-            withdrawnAmount: 0,
-            distributionBonus: 0
+                sponsor: sponsor,
+                balance: 0,
+                rank: 0,
+                selfBuy: 0,
+                turnover: 0,
+                maxChildTurnover: 0,
+                directBonus: 0,
+                indirectBonus: 0,
+                founderBonus: 0,
+                cryptoRewardBonus: 0,
+                reinvestedAmount: 0,
+                withdrawnAmount: 0,
+                distributionBonus: 0
             });
             _accounts.add(msg.sender);
 
@@ -160,6 +166,19 @@ contract MultiLevelTreeAccountStorage {
 
     function reinvestedAmountOf(address account) public view returns(uint256) {
         return _accountsData[account].reinvestedAmount;
+    }
+
+
+    function getMinimumSelfBuyForDirectBonus() public view returns(uint256) {
+        return minimumSelfBuyForDirectBonus;
+    }
+
+
+    function setMinimumSelfBuyForDirectBonus(uint256 amount) public {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXFToken: must have admin role to add founder");
+        minimumSelfBuyForDirectBonus = amount;
+
+        emit MinimumSelfBuyForDirectBonusUpdate(amount);
     }
 
 
@@ -243,10 +262,16 @@ contract MultiLevelTreeAccountStorage {
         }
     }
 
+    function calculateDirectBonus(uint256 amount) internal view returns(uint256) {
+        return SafeMath.div(SafeMath.mul(amount, DIRECT_FEE), 100);
+    }
+
     function calculateIndirectBonus(uint256 amount, uint rank1, uint rank2) internal view returns(uint256) {
         uint256 percentDifference = AFFILIATE_RANKS[rank1].percent - AFFILIATE_RANKS[rank2].percent;
         return SafeMath.div(SafeMath.mul(amount, percentDifference), 100);
     }
 
-
+    function isEligibleForDirectBonus(address sponsor) internal view returns(bool) {
+        return (sponsor != address(this) && selfBuyOf(sponsor) > minimumSelfBuyForDirectBonus);
+    }
 }

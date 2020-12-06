@@ -12,6 +12,7 @@ abstract contract Founder is MultiLevelTreeAccountStorage, StandardToken {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeMath for uint256;
 
+    uint256 constant private FOUNDER_FEE = 1;
 
     EnumerableSet.AddressSet private _founderAccounts;
 
@@ -50,5 +51,9 @@ abstract contract Founder is MultiLevelTreeAccountStorage, StandardToken {
             address account = _founderAccounts.at(i);
             addFounderBonusTo(account, payoutShare);
         }
+    }
+
+    function calculateFounderBonus(uint256 amount) internal view returns(uint256) {
+        return SafeMath.div(SafeMath.mul(amount, FOUNDER_FEE), 100);
     }
 }

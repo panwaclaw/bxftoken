@@ -10,6 +10,7 @@ import "./AccessControlRoles.sol";
 contract Company is AccessControl, AccessControlRoles {
     using SafeMath for uint256;
 
+    uint256 constant private COMPANY_FEE = 30;
     uint256 private _companyBalance = 0;
 
     event CompanyWithdraw(address indexed account, uint256 amount);
@@ -32,5 +33,10 @@ contract Company is AccessControl, AccessControlRoles {
 
     function increaseCompanyBalance(uint256 amount) internal view {
         _companyBalance.add(amount);
+    }
+
+
+    function calculateCompanyFee(uint256 amount) internal view returns(uint256) {
+        return SafeMath.div(SafeMath.mul(amount, COMPANY_FEE), 100);
     }
 }

@@ -13,5 +13,5 @@ contract("BXFToken", accounts => {
         }
         assert.equal(isCreated.length, accounts.length, "not all accounts were registered");
         for (let i = 0; i < isCreated.length; i++) assert.equal(isCreated[i], true, i.toString() + " not created");
-    })
+    });
 })

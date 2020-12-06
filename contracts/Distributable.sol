@@ -14,7 +14,7 @@ abstract contract Distributable is MultiLevelTreeAccountStorage, StandardToken {
 
     uint256 constant private INITIAL_TOKEN_PRICE = 0.0000001 ether;
     uint256 constant private INCREMENT_TOKEN_PRICE = 0.00000001 ether;
-    uint256 constant internal MAGNITUDE = 2 ** 64;
+    uint256 constant private MAGNITUDE = 2 ** 64;
     uint256 constant private DISTRIBUTION_FEE = 7;
 
 
@@ -69,6 +69,41 @@ abstract contract Distributable is MultiLevelTreeAccountStorage, StandardToken {
         _profitPerShare += (distributedBonus * MAGNITUDE / totalSupply());
     }
 
+
+    function processDistributionOnBuy(uint256 amountOfTokens, uint256 distributedBonus) internal {
+        uint256 distributionFee = distributedBonus * MAGNITUDE;
+
+        if (totalSupply() > 0) {
+            increaseTotalSupply(amountOfTokens);
+            increaseProfitPerShare(distributedBonus);
+            distributionFee = amountOfTokens * (distributedBonus * MAGNITUDE / totalSupply());
+        } else {
+            setTotalSupply(amountOfTokens);
+        }
+
+        int256 distributionPayout = (int256) (_profitPerShare * amountOfTokens - distributionFee);
+        increaseDistributionBonusValueFor(msg.sender, distributionPayout);
+    }
+
+
+    function processDistributionOnSell(uint256 amountOfTokens) internal returns(uint256) {
+        uint256 ethereum = tokensToEthereum(amountOfTokens);
+        uint256 distributedBonus = calculateDistributedAmount(ethereum);
+        uint256 taxedEthereum = SafeMath.sub(ethereum, distributedBonus);
+
+        int256 distributedBonusUpdate = (int256) (_profitPerShare * amountOfTokens + (taxedEthereum * MAGNITUDE));
+        decreaseDistributionBonusValueFor(msg.sender, distributedBonusUpdate);
+
+        if (totalSupply() > 0) {
+            increaseProfitPerShare(distributedBonus);
+        }
+        return taxedEthereum;
+    }
+
+
+    function processDistributionUpdateOnWithdrawFor(address account) internal {
+        increaseDistributionBonusValueFor(account, (int256) (distributionBonusOf(account) * MAGNITUDE));
+    }
 
 
     function ethereumToTokens(uint256 _ethereum) internal view returns(uint256) {
