@@ -11,6 +11,7 @@ contract("BXFToken", accounts => {
           await instance.registerAccount(accounts[0], {from: accounts[i]});
           isCreated[i] = await instance.hasAccount(accounts[i]);
         }
+        assert.equal(isCreated.length, accounts.length, "not all accounts were registered");
         for (let i = 0; i < isCreated.length; i++) assert.equal(isCreated[i], true, i.toString() + " not created");
     })
 })
