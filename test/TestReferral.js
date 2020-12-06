@@ -5,10 +5,10 @@ contract("BXFToken", accounts => {
         let instance = await BXFToken.deployed();
         let isCreated = [];
         console.log(accounts);
-        await instance.registerAccount("0x0000000000000000000000000000000000000000", {from: accounts[0]});
+        await instance.createAccount("0x0000000000000000000000000000000000000000", {from: accounts[0]});
         isCreated[0] = await instance.hasAccount(accounts[0]);
         for (let i = 1; i < accounts.length; i++) {
-          await instance.registerAccount(accounts[0], {from: accounts[i]});
+          await instance.createAccount(accounts[0], {from: accounts[i]});
           isCreated[i] = await instance.hasAccount(accounts[i]);
         }
         assert.equal(isCreated.length, accounts.length, "not all accounts were registered");
