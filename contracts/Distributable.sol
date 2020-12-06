@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.7.5;
+pragma abicoder v2;
+
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./MultiLevelTreeAccountStorage.sol";
+import "./MultiLevelTree.sol";
 import "./StandardToken.sol";
 
 
-abstract contract Distributable is MultiLevelTreeAccountStorage, StandardToken {
+abstract contract Distributable is MultiLevelTree, StandardToken {
     using SafeMath for uint256;
 
     uint256 private _profitPerShare;

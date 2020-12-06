@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.7.5;
+pragma abicoder v2;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./AccessControlRoles.sol";
-import "./MultiLevelTreeAccountStorage.sol";
+import "./MultiLevelTree.sol";
 
 
-contract CryptoReward is MultiLevelTreeAccountStorage, AccessControlRoles {
+contract CryptoReward is MultiLevelTree, AccessControlRoles {
     event PaidCryptoReward(address indexed account, uint256 ethereumPaid);
 
     function payCryptoReward(address account) public payable {

@@ -1,20 +1,22 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.7.5;
+pragma abicoder v2;
 
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
-import "./MultiLevelTreeAccountStorage.sol";
+import "./MultiLevelTree.sol";
 import "./AccessControlRoles.sol";
 import "./StandardToken.sol";
 
 
-abstract contract Founder is MultiLevelTreeAccountStorage, StandardToken {
+abstract contract Founder is MultiLevelTree, StandardToken {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeMath for uint256;
 
     uint256 constant private FOUNDER_FEE = 1;
 
     EnumerableSet.AddressSet private _founderAccounts;
+
 
     function isFounder(address account) public view returns(bool) {
         return _founderAccounts.contains(account);
