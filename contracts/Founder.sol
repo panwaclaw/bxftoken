@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.7.2;
+pragma solidity ^0.7.5;
 
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "./MultiLevelTreeAccountStorage.sol";
@@ -27,13 +27,13 @@ abstract contract Founder is MultiLevelTreeAccountStorage, StandardToken {
 
 
     function addFounder(address account) public returns(bool) {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "EthPire: must have admin role to add founder");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXFToken: must have admin role to add founder");
         return _founderAccounts.add(account);
     }
 
 
     function removeFounder(address account) public returns(bool) {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "EthPire: must have admin role to remove founder");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXfToken: must have admin role to remove founder");
         return _founderAccounts.remove(account);
     }
 
@@ -53,7 +53,7 @@ abstract contract Founder is MultiLevelTreeAccountStorage, StandardToken {
         }
     }
 
-    function calculateFounderBonus(uint256 amount) internal view returns(uint256) {
+    function calculateFounderBonus(uint256 amount) internal pure returns(uint256) {
         return SafeMath.div(SafeMath.mul(amount, FOUNDER_FEE), 100);
     }
 }

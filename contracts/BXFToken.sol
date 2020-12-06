@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.7.2;
+pragma solidity ^0.7.5;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
@@ -147,21 +147,16 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company {
         return amountOfTokens;
     }
 
-    
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal view {
-        require(!paused(), "BXFToken: token transfer while paused");
-    }
-
 
     function transfer(address recipient, uint256 amount) public virtual returns (bool) {
-        _transfer(_msgSender(), recipient, amount);
+        _transfer(msg.sender, recipient, amount);
         return true;
     }
 
     
     function _transfer(address sender, address recipient, uint256 amount) internal virtual {
-        require(sender != address(0), "ERC20: transfer from the zero address");
-        require(recipient != address(0), "ERC20: transfer to the zero address");
+        require(sender != address(0), "BXFToken: transfer from the zero address");
+        require(recipient != address(0), "BXFToken: transfer to the zero address");
         require(amount <= balanceOf(sender));
 
         _beforeTokenTransfer(sender, recipient, amount);

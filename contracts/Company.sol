@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.7.2;
+pragma solidity ^0.7.5;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -36,7 +36,7 @@ contract Company is AccessControl, AccessControlRoles {
     }
 
 
-    function calculateCompanyFee(uint256 amount) internal view returns(uint256) {
+    function calculateCompanyFee(uint256 amount) internal pure returns(uint256) {
         return SafeMath.div(SafeMath.mul(amount, COMPANY_FEE), 100);
     }
 }

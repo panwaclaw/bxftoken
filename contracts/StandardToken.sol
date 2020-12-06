@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.7.2;
+pragma solidity ^0.7.5;
 
 import "@openzeppelin/contracts/GSN/Context.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -46,14 +46,19 @@ contract StandardToken is Context, AccessControl, Pausable, AccessControlRoles {
 
 
     function pause() public virtual {
-        require(hasRole(PAUSER_ROLE, msg.sender), "ERC20PresetMinterPauser: must have pauser role to pause");
+        require(hasRole(PAUSER_ROLE, msg.sender), "BXFToken: must have pauser role to pause");
         _pause();
     }
 
 
     function unpause() public virtual {
-        require(hasRole(PAUSER_ROLE, msg.sender), "ERC20PresetMinterPauser: must have pauser role to unpause");
+        require(hasRole(PAUSER_ROLE, msg.sender), "BXFToken: must have pauser role to unpause");
         _unpause();
+    }
+
+
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal view {
+        require(!paused(), "BXFToken: token transfer while paused");
     }
 
 
