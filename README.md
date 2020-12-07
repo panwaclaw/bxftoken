@@ -1,5 +1,5 @@
 # bxftokenTest:
-on branch Test: 
+go to the test branch: 
 ```
 git checkout Test
 ```
