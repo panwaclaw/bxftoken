@@ -28,17 +28,17 @@ contract AccountStorage is AccessControl {
         int256 distributionBonus;
     }
 
-    bool private _migrated = false;
+    bool private _accountsMigrated = false;
 
     EnumerableSet.AddressSet private _accounts;
     mapping (address => AccountData) private _accountsData;
 
     event AccountCreation(address indexed account, address indexed sponsor);
-    event MigrationFinished();
+    event AccountMigrationFinished();
 
 
     modifier isRegistered() {
-        require(_migrated, "BXFToken: account data isn't migrated yet, try later");
+        require(_accountsMigrated, "BXFToken: account data isn't migrated yet, try later");
         require(hasAccount(msg.sender), "BXFToken: account must be registered by manager first");
         _;
     }
@@ -65,7 +65,7 @@ contract AccountStorage is AccessControl {
 
     function migrateAccount(address account, address sponsor) public {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXFToken: must have admin role to migrate data");
-        require(!_migrated, "BXFToken: data migration process is no more available");
+        require(!_accountsMigrated, "BXFToken: account data migration method is no more available");
 
         if (sponsor == address(0)) {
             sponsor = address(this);
@@ -93,7 +93,7 @@ contract AccountStorage is AccessControl {
     function migrateAccountsInBatch(address[] memory addresses) public {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXFToken: must have admin role to migrate data");
         require(addresses.length % 2 == 0, "BXFToken: you must pass addesses in pairs");
-        require(!_migrated, "BXFToken: data migration process is no more available");
+        require(!_accountsMigrated, "BXFToken: account data migration method is no more available");
 
         for (uint i = 0; i < addresses.length; i += 2) {
             address curAddress = addresses[i];
@@ -122,22 +122,22 @@ contract AccountStorage is AccessControl {
     }
 
 
-    function isMigrated() public view returns(bool) {
-        return _migrated;
+    function isDataMigrated() public view returns(bool) {
+        return _accountsMigrated;
     }
 
 
-    function finishMigration() public {
+    function finishAccountMigration() public {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXFToken: must have admin role to migrate data");
-        require(!_migrated, "BXFToken: data migration process is no more available");
+        require(!_accountsMigrated, "BXFToken: account data migration method is no more available");
 
-        _migrated = true;
-        emit MigrationFinished();
+        _accountsMigrated = true;
+        emit AccountMigrationFinished();
     }
 
 
     function createAccount(address sponsor) public returns(bool) {
-        require(_migrated, "BXFToken: account data isn't migrated yet, try later");
+        require(_accountsMigrated, "BXFToken: account data isn't migrated yet, try later");
 
         if (sponsor == address(0)) {
             sponsor = address(this);
