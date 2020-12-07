@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.7.5;
-pragma abicoder v2;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -35,6 +34,7 @@ contract AccountStorage is AccessControl {
     mapping (address => AccountData) private _accountsData;
 
     event AccountCreation(address indexed account, address indexed sponsor);
+    event MigrationFinished();
 
 
     modifier isRegistered() {
@@ -63,13 +63,41 @@ contract AccountStorage is AccessControl {
     }
 
 
-    function migrateAccounts(address[][2] memory addresses) public returns(bool) {
+    function migrateAccount(address account, address sponsor) public {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXFToken: must have admin role to migrate data");
+        require(!_migrated, "BXFToken: data migration process is no more available");
+
+        if (sponsor == address(0)) {
+            sponsor = address(this);
+        }
+        _accountsData[account] = AccountData({
+            sponsor: sponsor,
+            balance: 0,
+            rank: 0,
+            selfBuy: 0,
+            turnover: 0,
+            maxChildTurnover: 0,
+            directBonus: 0,
+            indirectBonus: 0,
+            founderBonus: 0,
+            cryptoRewardBonus: 0,
+            reinvestedAmount: 0,
+            withdrawnAmount: 0,
+            distributionBonus: 0
+        });
+        _accounts.add(account);
+        emit AccountCreation(account, sponsor);
+    }
+
+
+    function migrateAccountsInBatch(address[] memory addresses) public {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXFToken: must have admin role to migrate data");
         require(addresses.length % 2 == 0, "BXFToken: you must pass addesses in pairs");
+        require(!_migrated, "BXFToken: data migration process is no more available");
 
         for (uint i = 0; i < addresses.length; i += 2) {
-            address curAddress = addresses[i][0];
-            address curSponsorAddress = addresses[i][1];
+            address curAddress = addresses[i];
+            address curSponsorAddress = addresses[i + 1];
             if (curSponsorAddress == address(0)) {
                 curSponsorAddress = address(this);
             }
@@ -89,14 +117,28 @@ contract AccountStorage is AccessControl {
                 distributionBonus: 0
             });
             _accounts.add(curAddress);
+            emit AccountCreation(curAddress, curSponsorAddress);
         }
-        _migrated = true;
+    }
+
+
+    function isMigrated() public view returns(bool) {
         return _migrated;
+    }
+
+
+    function finishMigration() public {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXFToken: must have admin role to migrate data");
+        require(!_migrated, "BXFToken: data migration process is no more available");
+
+        _migrated = true;
+        emit MigrationFinished();
     }
 
 
     function createAccount(address sponsor) public returns(bool) {
         require(_migrated, "BXFToken: account data isn't migrated yet, try later");
+
         if (sponsor == address(0)) {
             sponsor = address(this);
         }
@@ -124,6 +166,11 @@ contract AccountStorage is AccessControl {
             emit AccountCreation(msg.sender, sponsor);
         }
         return false;
+    }
+
+
+    function getAccountsCount() public view returns(uint256) {
+        return _accounts.length();
     }
 
 
