@@ -3,6 +3,7 @@ const BXFToken = artifacts.require("BXFToken");
 contract("BXFToken", accounts => {
     it("first test", async function() {
         let instance = await BXFToken.deployed();
+        instance.finishAccountMigration()
         let isCreated = [];
         console.log(accounts);
         await instance.createAccount("0x0000000000000000000000000000000000000000", {from: accounts[0]});
