@@ -164,6 +164,7 @@ contract AccountStorage is AccessControl {
             _accounts.add(msg.sender);
 
             emit AccountCreation(msg.sender, sponsor);
+            return true;
         }
         return false;
     }
