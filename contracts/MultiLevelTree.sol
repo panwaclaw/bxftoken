@@ -21,8 +21,6 @@ contract MultiLevelTree is AccountStorage {
         uint256 splitRulePercent;
     }
 
-    bytes32 public constant COMPANY_MANAGER_ROLE = keccak256("COMPANY_MANAGER_ROLE");
-
     uint256 constant private DIRECT_FEE = 10;
     uint256 private minimumSelfBuyForDirectBonus = 0.05 ether;
 
@@ -51,7 +49,7 @@ contract MultiLevelTree is AccountStorage {
 
 
     function setMinimumSelfBuyForDirectBonus(uint256 amount) public {
-        require(hasRole(COMPANY_MANAGER_ROLE, msg.sender), "MultiLevelTree: must have company manager role to set minimum self buy for direct bonus");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "MultiLevelTree: must have company manager role to set minimum self buy for direct bonus");
         minimumSelfBuyForDirectBonus = amount;
 
         emit MinimumSelfBuyForDirectBonusUpdate(amount);

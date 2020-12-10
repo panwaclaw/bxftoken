@@ -7,10 +7,10 @@ import "./AccountStorage.sol";
 
 contract Sale is AccountStorage {
 
-    uint256 private _saleStartBlockNumber = 0;
+    uint private _saleStartBlockNumber = 0;
     bytes32 public constant SALE_MANAGER_ROLE = keccak256("SALE_MANAGER_ROLE");
 
-    event SaleStarted(uint256 atTime);
+    event SaleStarted(uint atBlockNumber, uint atTimestamp);
 
     modifier canInvest(uint256 amount) {
         require(selfBuyOf(msg.sender) + amount <= getInvestmentCap(), "Sale: you can't invest more than current investment cap");
@@ -25,15 +25,15 @@ contract Sale is AccountStorage {
         if (currentBlockNumberFromSaleStart <= 1250000)
             return 31680000 * (currentBlockNumberFromSaleStart**2) + 1 ether;
         if (currentBlockNumberFromSaleStart <= 2500000)
-            return -31680000 * (currentBlockNumberFromSaleStart - 2500000)**2 + 100 ether;
+            return 100 ether - 31680000 * (currentBlockNumberFromSaleStart - 2500000)**2;
         return 100 ether;
     }
 
 
     function startSale() public {
         require(hasRole(SALE_MANAGER_ROLE, msg.sender), "Sale: must have sale manager role");
-        _saleStartTimestamp = block.number;
+        _saleStartBlockNumber = block.number;
 
-        emit SaleStarted(_saleStartTimestamp);
+        emit SaleStarted(block.number, block.timestamp);
     }
 }

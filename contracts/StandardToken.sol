@@ -19,9 +19,9 @@ contract StandardToken is Context, AccessControl, Pausable {
     bytes32 public constant PAUSE_MANAGER_ROLE = keccak256("PAUSE_MANAGER_ROLE");
 
 
-    constructor(string memory name, string memory symbol) {
-        _name = name;
-        _symbol = symbol;
+    constructor(string memory name_, string memory symbol_) {
+        _name = name_;
+        _symbol = symbol_;
         _decimals = 18;
     }
 
