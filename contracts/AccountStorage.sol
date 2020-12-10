@@ -26,6 +26,8 @@ contract AccountStorage is AccessControl {
         uint256 reinvestedAmount;
         uint256 withdrawnAmount;
         int256 distributionBonus;
+        uint256 directPartnersCount;
+        uint256 indirectPartnersCount;
     }
 
     bool private _accountsMigrated = false;
@@ -60,7 +62,9 @@ contract AccountStorage is AccessControl {
             cryptoRewardBonus: 0,
             reinvestedAmount: 0,
             withdrawnAmount: 0,
-            distributionBonus: 0
+            distributionBonus: 0,
+            directPartnersCount: 0,
+            indirectPartnersCount: 0
         });
     }
 
@@ -85,9 +89,13 @@ contract AccountStorage is AccessControl {
             cryptoRewardBonus: 0,
             reinvestedAmount: 0,
             withdrawnAmount: 0,
-            distributionBonus: 0
+            distributionBonus: 0,
+            directPartnersCount: 0,
+            indirectPartnersCount: 0
         });
+        _accountsData[sponsor].directPartnersCount += 1;
         _accounts.add(account);
+
         emit AccountCreation(account, sponsor);
     }
 
@@ -116,9 +124,13 @@ contract AccountStorage is AccessControl {
                 cryptoRewardBonus: 0,
                 reinvestedAmount: 0,
                 withdrawnAmount: 0,
-                distributionBonus: 0
+                distributionBonus: 0,
+                directPartnersCount: 0,
+                indirectPartnersCount: 0
             });
             _accounts.add(curAddress);
+            _accountsData[curSponsorAddress].directPartnersCount += 1;
+
             emit AccountCreation(curAddress, curSponsorAddress);
         }
     }
@@ -132,6 +144,14 @@ contract AccountStorage is AccessControl {
     function finishAccountMigration() public {
         require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
         require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
+
+        for (uint i = 0; i <= _accounts.length(); i++) {
+            address curAccount = sponsorOf(sponsorOf(_accounts.at(i)));
+            while (curAccount != address(0)) {
+                _accountsData[curAccount].indirectPartnersCount += 1;
+                curAccount = sponsorOf(curAccount);
+            }
+        }
 
         _accountsMigrated = true;
         emit AccountMigrationFinished();
@@ -161,9 +181,18 @@ contract AccountStorage is AccessControl {
                 cryptoRewardBonus: 0,
                 reinvestedAmount: 0,
                 withdrawnAmount: 0,
-                distributionBonus: 0
+                distributionBonus: 0,
+                directPartnersCount: 0,
+                indirectPartnersCount: 0
             });
             _accounts.add(msg.sender);
+            _accountsData[sponsor].directPartnersCount += 1;
+
+            address curAccount = sponsorOf(sponsor);
+            while (curAccount != address(0)) {
+                _accountsData[sponsor].indirectPartnersCount += 1;
+                curAccount = sponsorOf(curAccount);
+            }
 
             emit AccountCreation(msg.sender, sponsor);
             return true;
@@ -179,6 +208,16 @@ contract AccountStorage is AccessControl {
 
     function hasAccount(address account) public view returns(bool) {
         return _accounts.contains(account);
+    }
+
+
+    function directPartnersCountOf(address account) public view returns(uint256) {
+        return _accountsData[account].directPartnersCount;
+    }
+
+
+    function indirectPartnersCountOf(address account) public view returns(uint256) {
+        return _accountsData[account].indirectPartnersCount;
     }
 
 
