@@ -33,13 +33,15 @@ contract AccountStorage is AccessControl {
     EnumerableSet.AddressSet private _accounts;
     mapping (address => AccountData) private _accountsData;
 
+    bytes32 public constant MIGRATION_MANAGER_ROLE = keccak256("MIGRATION_MANAGER_ROLE");
+
     event AccountCreation(address indexed account, address indexed sponsor);
     event AccountMigrationFinished();
 
 
     modifier isRegistered() {
-        require(_accountsMigrated, "BXFToken: account data isn't migrated yet, try later");
-        require(hasAccount(msg.sender), "BXFToken: account must be registered by manager first");
+        require(_accountsMigrated, "AccountStorage: account data isn't migrated yet, try later");
+        require(hasAccount(msg.sender), "AccountStorage: account must be registered first");
         _;
     }
 
@@ -64,8 +66,8 @@ contract AccountStorage is AccessControl {
 
 
     function migrateAccount(address account, address sponsor) public {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXFToken: must have admin role to migrate data");
-        require(!_accountsMigrated, "BXFToken: account data migration method is no more available");
+        require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
+        require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
 
         if (sponsor == address(0)) {
             sponsor = address(this);
@@ -91,9 +93,9 @@ contract AccountStorage is AccessControl {
 
 
     function migrateAccountsInBatch(address[] memory addresses) public {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXFToken: must have admin role to migrate data");
-        require(addresses.length % 2 == 0, "BXFToken: you must pass addesses in pairs");
-        require(!_accountsMigrated, "BXFToken: account data migration method is no more available");
+        require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
+        require(addresses.length % 2 == 0, "AccountStorage: you must pass addesses in pairs");
+        require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
 
         for (uint i = 0; i < addresses.length; i += 2) {
             address curAddress = addresses[i];
@@ -128,8 +130,8 @@ contract AccountStorage is AccessControl {
 
 
     function finishAccountMigration() public {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXFToken: must have admin role to migrate data");
-        require(!_accountsMigrated, "BXFToken: account data migration method is no more available");
+        require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
+        require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
 
         _accountsMigrated = true;
         emit AccountMigrationFinished();
@@ -137,13 +139,13 @@ contract AccountStorage is AccessControl {
 
 
     function createAccount(address sponsor) public returns(bool) {
-        require(_accountsMigrated, "BXFToken: account data isn't migrated yet, try later");
+        require(_accountsMigrated, "AccountStorage: account data isn't migrated yet, try later");
 
         if (sponsor == address(0)) {
             sponsor = address(this);
         }
         if (sponsor != address(this)) {
-            require(_accounts.contains(sponsor), "BXFToken: there's no such sponsor, consider joining with existing sponsor account or contract itself");
+            require(_accounts.contains(sponsor), "AccountStorage: there's no such sponsor, consider joining with existing sponsor account or contract itself");
         }
         if (!hasAccount(msg.sender)) {
             _accountsData[msg.sender] = AccountData({
@@ -251,7 +253,7 @@ contract AccountStorage is AccessControl {
 
 
     function decreaseBalanceOf(address account, uint256 amount) internal view {
-        _accountsData[account].balance.sub(amount, "BXFToken: transfer amount exceeds balance");
+        _accountsData[account].balance.sub(amount, "AccountStorage: amount exceeds balance");
     }
 
 

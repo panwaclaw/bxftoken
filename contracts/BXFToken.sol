@@ -5,12 +5,13 @@ pragma solidity ^0.7.5;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "./Company.sol";
-import "./Founder.sol";
 import "./CryptoReward.sol";
 import "./Distributable.sol";
+import "./Founder.sol";
+import "./Sale.sol";
 
 
-contract BXFToken is Distributable, CryptoReward, Founder, Company {
+contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
 
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeMath for uint256;
@@ -23,7 +24,7 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company {
     event Transfer(address indexed from, address indexed to, uint256 value);
 
 
-    constructor(string memory name, string memory symbol) StandardToken(name, symbol)  {
+    constructor(string memory name, string memory symbol) StandardToken(name, symbol) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
@@ -37,9 +38,6 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company {
         purchaseTokens(msg.value);
     }
 
-    function returnAddressThis() public view returns(address) {
-        return address(this);
-    }
 
     function sell(uint256 amountOfTokens) public isRegistered {
         require(amountOfTokens <= balanceOf(msg.sender));
@@ -83,15 +81,14 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company {
 
 
     function exit() public isRegistered {
-        uint256 _tokens = balanceOf(msg.sender);
-        if (_tokens > 0) {
-            sell(_tokens);
+        if (balanceOf(msg.sender) > 0) {
+            sell(balanceOf(msg.sender));
         }
         withdraw();
     }
 
 
-    function purchaseTokens(uint256 amountOfEthereum) internal returns(uint256) {
+    function purchaseTokens(uint256 amountOfEthereum) internal canInvest(amountOfEthereum) returns(uint256) {
         uint256 taxedEthereum = amountOfEthereum;
 
         uint256 companyFee = calculateCompanyFee(amountOfEthereum);
