@@ -32,8 +32,8 @@ contract Company is AccessControl {
     }
 
 
-    function increaseCompanyBalance(uint256 amount) internal view {
-        _companyBalance.add(amount);
+    function increaseCompanyBalance(uint256 amount) internal {
+        _companyBalance = _companyBalance.add(amount);
     }
 
 

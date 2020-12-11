@@ -44,7 +44,7 @@ abstract contract Founder is MultiLevelTree, StandardToken {
     }
 
 
-    function payToFounders(uint256 founderBonus) internal view {
+    function payToFounders(uint256 founderBonus) internal {
         uint256 foundersCount = getFoundersCount();
         uint256 payoutShare = SafeMath.div(founderBonus, foundersCount);
 
