@@ -70,7 +70,7 @@ abstract contract Distributable is MultiLevelTree, StandardToken {
     }
 
 
-    function processDistributionOnBuy(uint256 amountOfTokens, uint256 distributedBonus) internal {
+    function processDistributionOnBuy(address account, uint256 amountOfTokens, uint256 distributedBonus) internal {
         uint256 distributionFee = distributedBonus * MAGNITUDE;
 
         if (totalSupply() > 0) {
@@ -82,17 +82,17 @@ abstract contract Distributable is MultiLevelTree, StandardToken {
         }
 
         int256 distributionPayout = (int256) (_profitPerShare * amountOfTokens - distributionFee);
-        increaseDistributionBonusValueFor(msg.sender, distributionPayout);
+        increaseDistributionBonusValueFor(account, distributionPayout);
     }
 
 
-    function processDistributionOnSell(uint256 amountOfTokens) internal returns(uint256) {
+    function processDistributionOnSell(address account, uint256 amountOfTokens) internal returns(uint256) {
         uint256 ethereum = tokensToEthereum(amountOfTokens);
         uint256 distributedBonus = calculateDistributedAmount(ethereum);
         uint256 taxedEthereum = SafeMath.sub(ethereum, distributedBonus);
 
         int256 distributedBonusUpdate = (int256) (_profitPerShare * amountOfTokens + (taxedEthereum * MAGNITUDE));
-        decreaseDistributionBonusValueFor(msg.sender, distributedBonusUpdate);
+        decreaseDistributionBonusValueFor(account, distributedBonusUpdate);
 
         if (totalSupply() > 0) {
             increaseProfitPerShare(distributedBonus);
