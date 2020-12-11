@@ -47,7 +47,8 @@ contract AccountStorage is AccessControl {
 
 
     constructor() {
-        _accountsData[msg.sender] = AccountData({
+        address contractAddress = address(this);
+        AccountData memory accountData = AccountData({
             sponsor: address(0),
             balance: 0,
             rank: 0,
@@ -62,6 +63,7 @@ contract AccountStorage is AccessControl {
             withdrawnAmount: 0,
             distributionBonus: 0
         });
+        _accountsData[contractAddress] = accountData;
     }
 
 
@@ -72,7 +74,7 @@ contract AccountStorage is AccessControl {
         if (sponsor == address(0)) {
             sponsor = address(this);
         }
-        _accountsData[account] = AccountData({
+        AccountData memory accountData = AccountData({
             sponsor: sponsor,
             balance: 0,
             rank: 0,
@@ -87,6 +89,7 @@ contract AccountStorage is AccessControl {
             withdrawnAmount: 0,
             distributionBonus: 0
         });
+        _accountsData[account] = accountData;
         _accounts.add(account);
         emit AccountCreation(account, sponsor);
     }
@@ -103,7 +106,7 @@ contract AccountStorage is AccessControl {
             if (curSponsorAddress == address(0)) {
                 curSponsorAddress = address(this);
             }
-            _accountsData[curAddress] = AccountData({
+            AccountData memory accountData = AccountData({
                 sponsor: curSponsorAddress,
                 balance: 0,
                 rank: 0,
@@ -118,6 +121,7 @@ contract AccountStorage is AccessControl {
                 withdrawnAmount: 0,
                 distributionBonus: 0
             });
+            _accountsData[curAddress] = accountData;
             _accounts.add(curAddress);
             emit AccountCreation(curAddress, curSponsorAddress);
         }
@@ -141,14 +145,16 @@ contract AccountStorage is AccessControl {
     function createAccount(address sponsor) public returns(bool) {
         require(_accountsMigrated, "AccountStorage: account data isn't migrated yet, try later");
 
+        address account = msg.sender;
+
         if (sponsor == address(0)) {
             sponsor = address(this);
         }
         if (sponsor != address(this)) {
             require(_accounts.contains(sponsor), "AccountStorage: there's no such sponsor, consider joining with existing sponsor account or contract itself");
         }
-        if (!hasAccount(msg.sender)) {
-            _accountsData[msg.sender] = AccountData({
+        if (!hasAccount(account)) {
+            AccountData memory accountData = AccountData({
                 sponsor: sponsor,
                 balance: 0,
                 rank: 0,
@@ -163,9 +169,10 @@ contract AccountStorage is AccessControl {
                 withdrawnAmount: 0,
                 distributionBonus: 0
             });
-            _accounts.add(msg.sender);
+            _accountsData[account] = accountData;
+            _accounts.add(account);
 
-            emit AccountCreation(msg.sender, sponsor);
+            emit AccountCreation(account, sponsor);
             return true;
         }
         return false;

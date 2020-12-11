@@ -32,6 +32,8 @@ contract Sale is AccountStorage {
 
     function startSale() public {
         require(hasRole(SALE_MANAGER_ROLE, msg.sender), "Sale: must have sale manager role");
+        require(_saleStartBlockNumber == 0, "Sale: start sale method is no more available");
+
         _saleStartBlockNumber = block.number;
 
         emit SaleStarted(block.number, block.timestamp);
