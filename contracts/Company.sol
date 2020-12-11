@@ -4,16 +4,17 @@ pragma solidity ^0.7.5;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./AccessControlRoles.sol";
 
 
-contract Company is AccessControl, AccessControlRoles {
+contract Company is AccessControl {
     using SafeMath for uint256;
 
     uint256 constant private COMPANY_FEE = 30;
     uint256 private _companyBalance = 0;
 
     event CompanyWithdraw(address indexed account, uint256 amount);
+
+    bytes32 public constant COMPANY_MANAGER_ROLE = keccak256("COMPANY_MANAGER_ROLE");
 
 
     function companyBalance() public view returns(uint256) {
@@ -22,8 +23,8 @@ contract Company is AccessControl, AccessControlRoles {
 
 
     function withdrawCompanyBalance(uint256 amount) public {
-        require(hasRole(MANAGER_ROLE, msg.sender), "BXFToken: must have manager role");
-        require(amount <= _companyBalance, "BXFToken: insufficient company balance");
+        require(hasRole(COMPANY_MANAGER_ROLE, msg.sender), "Company: must have company manager role");
+        require(amount <= _companyBalance, "Company: insufficient company balance");
         msg.sender.transfer(amount);
         _companyBalance.sub(amount);
 

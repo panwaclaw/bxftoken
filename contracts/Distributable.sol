@@ -101,11 +101,6 @@ abstract contract Distributable is MultiLevelTree, StandardToken {
     }
 
 
-    function processDistributionUpdateOnWithdrawFor(address account) internal {
-        increaseDistributionBonusValueFor(account, (int256) (distributionBonusOf(account) * MAGNITUDE));
-    }
-
-
     function ethereumToTokens(uint256 _ethereum) internal view returns(uint256) {
         uint256 _tokenPriceInitial = INITIAL_TOKEN_PRICE * 1e18;
         uint256 _tokensReceived =
@@ -134,7 +129,6 @@ abstract contract Distributable is MultiLevelTree, StandardToken {
 
 
     function tokensToEthereum(uint256 _tokens) internal view returns(uint256) {
-
         uint256 tokens_ = (_tokens + 1e18);
         uint256 _tokenSupply = (totalSupply() + 1e18);
         uint256 _etherReceived =
