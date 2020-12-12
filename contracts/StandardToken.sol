@@ -6,10 +6,9 @@ import "@openzeppelin/contracts/GSN/Context.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "./AccessControlRoles.sol";
 
 
-contract StandardToken is Context, AccessControl, Pausable, AccessControlRoles {
+contract StandardToken is Context, AccessControl, Pausable {
     using SafeMath for uint256;
     uint256 private _totalSupply = 0;
 
@@ -17,10 +16,12 @@ contract StandardToken is Context, AccessControl, Pausable, AccessControlRoles {
     string private _symbol;
     uint8 private _decimals;
 
+    bytes32 public constant PAUSE_MANAGER_ROLE = keccak256("PAUSE_MANAGER_ROLE");
 
-    constructor(string memory name, string memory symbol) {
-        _name = name;
-        _symbol = symbol;
+
+    constructor(string memory name_, string memory symbol_) {
+        _name = name_;
+        _symbol = symbol_;
         _decimals = 18;
     }
 
@@ -46,19 +47,19 @@ contract StandardToken is Context, AccessControl, Pausable, AccessControlRoles {
 
 
     function pause() public virtual {
-        require(hasRole(PAUSER_ROLE, msg.sender), "BXFToken: must have pauser role to pause");
+        require(hasRole(PAUSE_MANAGER_ROLE, msg.sender), "StandardToken: must have pauser manager role to pause");
         _pause();
     }
 
 
     function unpause() public virtual {
-        require(hasRole(PAUSER_ROLE, msg.sender), "BXFToken: must have pauser role to unpause");
+        require(hasRole(PAUSE_MANAGER_ROLE, msg.sender), "StandardToken: must have pauser manager role to unpause");
         _unpause();
     }
 
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal view {
-        require(!paused(), "BXFToken: token transfer while paused");
+        require(!paused(), "StandardToken: token transfer while paused");
     }
 
 

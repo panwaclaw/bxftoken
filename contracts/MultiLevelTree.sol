@@ -49,7 +49,7 @@ contract MultiLevelTree is AccountStorage {
 
 
     function setMinimumSelfBuyForDirectBonus(uint256 amount) public {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXFToken: must have admin role to set minimum self buy for direct bonus");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "MultiLevelTree: must have company manager role to set minimum self buy for direct bonus");
         minimumSelfBuyForDirectBonus = amount;
 
         emit MinimumSelfBuyForDirectBonusUpdate(amount);

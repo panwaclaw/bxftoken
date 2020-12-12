@@ -4,7 +4,6 @@ pragma solidity ^0.7.5;
 
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "./MultiLevelTree.sol";
-import "./AccessControlRoles.sol";
 import "./StandardToken.sol";
 
 
@@ -13,6 +12,7 @@ abstract contract Founder is MultiLevelTree, StandardToken {
     using SafeMath for uint256;
 
     uint256 constant private FOUNDER_FEE = 1;
+    bytes32 public constant FOUNDER_MANAGER_ROLE = keccak256("FOUNDER_MANAGER_ROLE");
 
     EnumerableSet.AddressSet private _founderAccounts;
 
@@ -28,13 +28,13 @@ abstract contract Founder is MultiLevelTree, StandardToken {
 
 
     function addFounder(address account) public returns(bool) {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXFToken: must have admin role to add founder");
+        require(hasRole(FOUNDER_MANAGER_ROLE, msg.sender), "Founder: must have founder manager role to add founder");
         return _founderAccounts.add(account);
     }
 
 
     function removeFounder(address account) public returns(bool) {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXfToken: must have admin role to remove founder");
+        require(hasRole(FOUNDER_MANAGER_ROLE, msg.sender), "Founder: must have founder manager role to remove founder");
         return _founderAccounts.remove(account);
     }
 
