@@ -23,7 +23,7 @@ abstract contract Distributable is MultiLevelTree, StandardToken {
         if (totalSupply() == 0){
             return INITIAL_TOKEN_PRICE + INCREMENT_TOKEN_PRICE;
         } else {
-            uint256 ethereum = tokensToEthereum(10 ** 18);
+            uint256 ethereum = tokensToEthereum(1 ether);
             uint256 distributedAmount = calculateDistributedAmount(ethereum);
             uint256 taxedEthereum = SafeMath.add(ethereum, distributedAmount);
             return taxedEthereum;
@@ -35,10 +35,9 @@ abstract contract Distributable is MultiLevelTree, StandardToken {
         if (totalSupply() == 0) {
             return INITIAL_TOKEN_PRICE - INCREMENT_TOKEN_PRICE;
         } else {
-            uint256 ethereum = tokensToEthereum(10 ** 18);
-            uint256 totalFees = DISTRIBUTION_FEE;
-            uint256 taxedAmount = SafeMath.div(SafeMath.mul(ethereum, totalFees), 100);
-            uint256 taxedEthereum = SafeMath.sub(ethereum, taxedAmount);
+            uint256 ethereum = tokensToEthereum(1 ether);
+            uint256 distributedAmount = calculateDistributedAmount(ethereum);
+            uint256 taxedEthereum = SafeMath.sub(ethereum, distributedAmount);
             return taxedEthereum;
         }
     }
@@ -130,6 +129,9 @@ abstract contract Distributable is MultiLevelTree, StandardToken {
 
     function tokensToEthereum(uint256 _tokens) internal view returns(uint256) {
         uint256 tokens_ = (_tokens + 1e18);
+        if (totalSupply() == 0) {
+            return INITIAL_TOKEN_PRICE * _tokens / 1e18;
+        }
         uint256 _tokenSupply = (totalSupply() + 1e18);
         uint256 _etherReceived =
         (
@@ -137,8 +139,11 @@ abstract contract Distributable is MultiLevelTree, StandardToken {
         SafeMath.sub(
             (
             (
-            (INITIAL_TOKEN_PRICE + (INCREMENT_TOKEN_PRICE * (_tokenSupply / 1e18))) - INCREMENT_TOKEN_PRICE) * (tokens_ - 1e18)
-            ), (INCREMENT_TOKEN_PRICE* ((tokens_ ** 2 - tokens_) / 1e18)) / 2
+            (
+            INITIAL_TOKEN_PRICE + (INCREMENT_TOKEN_PRICE * (_tokenSupply / 1e18))
+            ) - INCREMENT_TOKEN_PRICE
+            ) * (tokens_ - 1e18)
+            ), (INCREMENT_TOKEN_PRICE * ((tokens_ ** 2 - tokens_) / 1e18)) / 2
         )
         /1e18);
         return _etherReceived;

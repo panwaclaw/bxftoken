@@ -99,11 +99,11 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
         uint256 founderBonus = calculateFounderBonus(amountOfEthereum);
         uint256 distributedBonus = calculateDistributedAmount(amountOfEthereum);
 
-        taxedEthereum.sub(companyFee);
+        taxedEthereum = taxedEthereum.sub(companyFee);
         increaseCompanyBalance(companyFee);
 
         if (getFoundersCount() > 0) {
-            taxedEthereum.sub(founderBonus);
+            taxedEthereum = taxedEthereum.sub(founderBonus);
             payToFounders(founderBonus);
         }
 
@@ -113,7 +113,7 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
 
         if (isEligibleForDirectBonus(sponsor)) {
             addDirectBonusTo(sponsor, directBonus);
-            taxedEthereum.sub(directBonus);
+            taxedEthereum = taxedEthereum.sub(directBonus);
         }
 
         uint256 maxRankUnder = rankOf(account);
@@ -121,7 +121,7 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
             if (rankOf(account) - maxRankUnder > 0 && account != senderAccount) {
                 uint256 accountRank = rankOf(account);
                 uint256 indirectBonus = calculateIndirectBonus(amountOfEthereum, accountRank, maxRankUnder);
-                taxedEthereum.sub(indirectBonus);
+                taxedEthereum = taxedEthereum.sub(indirectBonus);
                 addIndirectBonusTo(account, indirectBonus);
                 if (accountRank > maxRankUnder) {
                     maxRankUnder = accountRank;
@@ -139,7 +139,7 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
             account = sponsorOf(account);
         }
 
-        taxedEthereum.sub(distributedBonus);
+        taxedEthereum = taxedEthereum.sub(distributedBonus);
 
         uint256 amountOfTokens = ethereumToTokens(taxedEthereum);
 
