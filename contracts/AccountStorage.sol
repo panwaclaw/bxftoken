@@ -244,53 +244,53 @@ contract AccountStorage is AccessControl {
     }
 
 
-    function increaseSelfBuyOf(address account, uint256 amount) internal view {
-        _accountsData[account].selfBuy.add(amount);
+    function increaseSelfBuyOf(address account, uint256 amount) internal {
+        _accountsData[account].selfBuy =_accountsData[account].selfBuy.add(amount);
     }
 
 
-    function increaseTurnoverOf(address account, uint256 amount) internal view {
-        _accountsData[account].turnover.add(amount);
+    function increaseTurnoverOf(address account, uint256 amount) internal {
+        _accountsData[account].turnover = _accountsData[account].turnover.add(amount);
     }
 
 
-    function increaseBalanceOf(address account, uint256 amount) internal view {
-        _accountsData[account].balance.add(amount);
+    function increaseBalanceOf(address account, uint256 amount) internal {
+        _accountsData[account].balance = _accountsData[account].balance.add(amount);
     }
 
 
-    function decreaseBalanceOf(address account, uint256 amount) internal view {
-        _accountsData[account].balance.sub(amount, "AccountStorage: amount exceeds balance");
+    function decreaseBalanceOf(address account, uint256 amount) internal {
+        _accountsData[account].balance = _accountsData[account].balance.sub(amount, "AccountStorage: amount exceeds balance");
     }
 
 
-    function addDirectBonusTo(address account, uint256 amount) internal view {
-        _accountsData[account].directBonus.add(amount);
+    function addDirectBonusTo(address account, uint256 amount) internal {
+        _accountsData[account].directBonus = _accountsData[account].directBonus.add(amount);
     }
 
 
-    function addIndirectBonusTo(address account, uint256 amount) internal view {
-        _accountsData[account].indirectBonus.add(amount);
+    function addIndirectBonusTo(address account, uint256 amount) internal {
+        _accountsData[account].indirectBonus = _accountsData[account].indirectBonus.add(amount);
     }
 
 
-    function addFounderBonusTo(address account, uint256 amount) internal view {
-        _accountsData[account].founderBonus.add(amount);
+    function addFounderBonusTo(address account, uint256 amount) internal {
+        _accountsData[account].founderBonus = _accountsData[account].founderBonus.add(amount);
     }
 
 
-    function addCryptoRewardBonusTo(address account, uint256 amount) internal view {
-        _accountsData[account].cryptoRewardBonus.add(amount);
+    function addCryptoRewardBonusTo(address account, uint256 amount) internal {
+        _accountsData[account].cryptoRewardBonus = _accountsData[account].cryptoRewardBonus.add(amount);
     }
 
 
-    function addWithdrawnAmountTo(address account, uint256 amount) internal view{
-        _accountsData[account].withdrawnAmount.add(amount);
+    function addWithdrawnAmountTo(address account, uint256 amount) internal {
+        _accountsData[account].withdrawnAmount = _accountsData[account].withdrawnAmount.add(amount);
     }
 
 
-    function addReinvestedAmountTo(address account, uint256 amount) internal view {
-        _accountsData[account].reinvestedAmount.add(amount);
+    function addReinvestedAmountTo(address account, uint256 amount) internal {
+        _accountsData[account].reinvestedAmount = _accountsData[account].reinvestedAmount.add(amount);
     }
 
 

@@ -26,14 +26,14 @@ contract Company is AccessControl {
         require(hasRole(COMPANY_MANAGER_ROLE, msg.sender), "Company: must have company manager role");
         require(amount <= _companyBalance, "Company: insufficient company balance");
         msg.sender.transfer(amount);
-        _companyBalance.sub(amount);
+        _companyBalance = _companyBalance.add(amount);
 
         emit CompanyWithdraw(msg.sender, amount);
     }
 
 
-    function increaseCompanyBalance(uint256 amount) internal view {
-        _companyBalance.add(amount);
+    function increaseCompanyBalance(uint256 amount) internal {
+        _companyBalance = _companyBalance.add(amount);
     }
 
 
