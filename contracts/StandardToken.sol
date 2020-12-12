@@ -68,12 +68,12 @@ contract StandardToken is Context, AccessControl, Pausable {
     }
 
 
-    function increaseTotalSupply(uint256 amount) internal view {
-        _totalSupply.add(amount);
+    function increaseTotalSupply(uint256 amount) internal {
+        _totalSupply = _totalSupply.add(amount);
     }
 
 
-    function decreaseTotalSupply(uint256 amount) internal view {
-        _totalSupply.sub(amount);
+    function decreaseTotalSupply(uint256 amount) internal {
+        _totalSupply = _totalSupply.sub(amount);
     }
 }
