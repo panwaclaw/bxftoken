@@ -54,11 +54,12 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
     }
 
 
-    function withdraw() public isRegistered {
+    function withdraw(uint256 amountToWithdraw) public isRegistered {
         address payable account = msg.sender;
-        require(totalBonusOf(account) > 0, "BXFToken: you don't have anything to withdraw");
-
-        uint256 amountToWithdraw = totalBonusOf(account);
+        uint256 totalBonus = totalBonusOf(account);
+        require(totalBounus > 0, "BXFToken: you don't have anything to withdraw");
+        require(amountToWithdraw <= totalBonusOf(account), "BXFToken: you don't have enough total bonus to withdraw");
+        require(amountToWithdraw <= address(this).balance, "BXFToken: insufficient contract balance");
 
         addWithdrawnAmountTo(account, amountToWithdraw);
 
@@ -68,11 +69,12 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
     }
 
 
-    function reinvest() public isRegistered {
+    function reinvest(uint256 amountToReinvest) public isRegistered {
         address account = msg.sender;
-        require(totalBonusOf(account) > 0, "BXFToken: you don't have anything to reinvest");
+        uint256 totalBonus = totalBonusOf(account);
 
-        uint256 amountToReinvest = totalBonusOf(account);
+        require(totalBounus > 0, "BXFToken: you don't have anything to reinvest");
+        require(amountToReinvest <= totalBonus, "BXFToken: you don't have enough total bonus to reinvest");
 
         addReinvestedAmountTo(account, amountToReinvest);
 

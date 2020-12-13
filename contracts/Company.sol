@@ -25,6 +25,8 @@ contract Company is AccessControl {
     function withdrawCompanyBalance(uint256 amount) public {
         require(hasRole(COMPANY_MANAGER_ROLE, msg.sender), "Company: must have company manager role");
         require(amount <= _companyBalance, "Company: insufficient company balance");
+        require(amount <= address(this).balance, "Company: insufficient contract balance");
+
         msg.sender.transfer(amount);
         _companyBalance = _companyBalance.add(amount);
 
