@@ -47,23 +47,7 @@ contract AccountStorage is AccessControl {
 
 
     constructor() {
-        address contractAddress = address(this);
-        AccountData memory accountData = AccountData({
-            sponsor: address(0),
-            balance: 0,
-            rank: 0,
-            selfBuy: 0,
-            turnover: 0,
-            maxChildTurnover: 0,
-            directBonus: 0,
-            indirectBonus: 0,
-            founderBonus: 0,
-            cryptoRewardBonus: 0,
-            reinvestedAmount: 0,
-            withdrawnAmount: 0,
-            distributionBonus: 0
-        });
-        _accountsData[contractAddress] = accountData;
+        addAccountData(address(this), address(0));
     }
 
 
@@ -86,22 +70,7 @@ contract AccountStorage is AccessControl {
             if (curSponsorAddress == address(0)) {
                 curSponsorAddress = address(this);
             }
-            AccountData memory accountData = AccountData({
-                sponsor: curSponsorAddress,
-                balance: 0,
-                rank: 0,
-                selfBuy: 0,
-                turnover: 0,
-                maxChildTurnover: 0,
-                directBonus: 0,
-                indirectBonus: 0,
-                founderBonus: 0,
-                cryptoRewardBonus: 0,
-                reinvestedAmount: 0,
-                withdrawnAmount: 0,
-                distributionBonus: 0
-            });
-            _accountsData[curAddress] = accountData;
+            addAccountData(curAddress, curSponsorAddress);
             _accounts.add(curAddress);
             emit AccountCreation(curAddress, curSponsorAddress);
         }
@@ -134,22 +103,7 @@ contract AccountStorage is AccessControl {
             require(_accounts.contains(sponsor), "AccountStorage: there's no such sponsor, consider joining with existing sponsor account or contract itself");
         }
         if (!hasAccount(account)) {
-            AccountData memory accountData = AccountData({
-                sponsor: sponsor,
-                balance: 0,
-                rank: 0,
-                selfBuy: 0,
-                turnover: 0,
-                maxChildTurnover: 0,
-                directBonus: 0,
-                indirectBonus: 0,
-                founderBonus: 0,
-                cryptoRewardBonus: 0,
-                reinvestedAmount: 0,
-                withdrawnAmount: 0,
-                distributionBonus: 0
-            });
-            _accountsData[account] = accountData;
+            addAccountData(account, sponsor);
             _accounts.add(account);
 
             emit AccountCreation(account, sponsor);
@@ -301,5 +255,24 @@ contract AccountStorage is AccessControl {
 
     function setRankFor(address account, uint256 rank) internal {
         _accountsData[account].rank = rank;
+    }
+
+    function addAccountData(address account, address sponsor) private {
+        AccountData memory accountData = AccountData({
+            sponsor: sponsor,
+            balance: 0,
+            rank: 0,
+            selfBuy: 0,
+            turnover: 0,
+            maxChildTurnover: 0,
+            directBonus: 0,
+            indirectBonus: 0,
+            founderBonus: 0,
+            cryptoRewardBonus: 0,
+            reinvestedAmount: 0,
+            withdrawnAmount: 0,
+            distributionBonus: 0
+        });
+        _accountsData[account] = accountData;
     }
 }
