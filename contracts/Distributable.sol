@@ -129,14 +129,11 @@ abstract contract Distributable is MultiLevelTree, StandardToken {
 
     function tokensToEthereum(uint256 _tokens) internal view returns(uint256) {
         uint256 tokens_ = (_tokens + 1e18);
-        if (totalSupply() == 0) {
-            return INITIAL_TOKEN_PRICE * _tokens / 1e18;
-        }
         uint256 _tokenSupply = (totalSupply() + 1e18);
         uint256 _etherReceived =
         (
         // underflow attempts BTFO
-        SafeMath.sub(
+        SafeMath.add(
             (
             (
             (

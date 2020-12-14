@@ -167,8 +167,6 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
 
         _beforeTokenTransfer(sender, recipient, amount);
 
-        if (totalBonusOf(sender) > 0) withdraw(totalBonusOf(sender));
-
         uint256 distributionFee = calculateDistributedAmount(amount);
         uint256 taxedTokens = SafeMath.sub(amount, distributionFee);
         uint256 distributedBonus = tokensToEthereum(distributionFee);
