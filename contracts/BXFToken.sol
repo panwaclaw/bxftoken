@@ -41,7 +41,7 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
 
     function sell(uint256 amountOfTokens) public isRegistered {
         address account = msg.sender;
-        require(amountOfTokens <= balanceOf(account));
+        require(amountOfTokens <= balanceOf(account), "BXFToken: insufficient token balance");
 
         decreaseTotalSupply(amountOfTokens);
         decreaseBalanceOf(account, amountOfTokens);

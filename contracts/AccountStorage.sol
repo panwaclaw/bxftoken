@@ -68,30 +68,10 @@ contract AccountStorage is AccessControl {
 
 
     function migrateAccount(address account, address sponsor) public {
-        require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
-        require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
-
-        if (sponsor == address(0)) {
-            sponsor = address(this);
-        }
-        AccountData memory accountData = AccountData({
-            sponsor: sponsor,
-            balance: 0,
-            rank: 0,
-            selfBuy: 0,
-            turnover: 0,
-            maxChildTurnover: 0,
-            directBonus: 0,
-            indirectBonus: 0,
-            founderBonus: 0,
-            cryptoRewardBonus: 0,
-            reinvestedAmount: 0,
-            withdrawnAmount: 0,
-            distributionBonus: 0
-        });
-        _accountsData[account] = accountData;
-        _accounts.add(account);
-        emit AccountCreation(account, sponsor);
+        address[] memory data = new address[](2);
+        data[0] = account;
+        data[1] = sponsor;
+        migrateAccountsInBatch(data);
     }
 
 
