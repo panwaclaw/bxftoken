@@ -57,7 +57,7 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
     function withdraw(uint256 amountToWithdraw) public isRegistered {
         address payable account = msg.sender;
         uint256 totalBonus = totalBonusOf(account);
-        require(totalBounus > 0, "BXFToken: you don't have anything to withdraw");
+        require(totalBonus > 0, "BXFToken: you don't have anything to withdraw");
         require(amountToWithdraw <= totalBonusOf(account), "BXFToken: you don't have enough total bonus to withdraw");
         require(amountToWithdraw <= address(this).balance, "BXFToken: insufficient contract balance");
 
@@ -73,7 +73,7 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
         address account = msg.sender;
         uint256 totalBonus = totalBonusOf(account);
 
-        require(totalBounus > 0, "BXFToken: you don't have anything to reinvest");
+        require(totalBonus > 0, "BXFToken: you don't have anything to reinvest");
         require(amountToReinvest <= totalBonus, "BXFToken: you don't have enough total bonus to reinvest");
 
         addReinvestedAmountTo(account, amountToReinvest);
@@ -89,7 +89,7 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
         if (balanceOf(account) > 0) {
             sell(balanceOf(account));
         }
-        withdraw();
+        withdraw(totalBonusOf(account));
     }
 
 
@@ -167,7 +167,7 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
 
         _beforeTokenTransfer(sender, recipient, amount);
 
-        if (totalBonusOf(sender) > 0) withdraw();
+        if (totalBonusOf(sender) > 0) withdraw(totalBonusOf(sender));
 
         uint256 distributionFee = calculateDistributedAmount(amount);
         uint256 taxedTokens = SafeMath.sub(amount, distributionFee);
