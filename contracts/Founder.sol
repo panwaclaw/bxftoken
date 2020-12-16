@@ -7,7 +7,7 @@ import "./MultiLevelTree.sol";
 import "./StandardToken.sol";
 
 
-abstract contract Founder is MultiLevelTree, StandardToken {
+abstract contract Founder is MultiLevelTree {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeMath for uint256;
 

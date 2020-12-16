@@ -7,7 +7,7 @@ import "./MultiLevelTree.sol";
 import "./StandardToken.sol";
 
 
-abstract contract Distributable is MultiLevelTree, StandardToken {
+abstract contract Distributable is MultiLevelTree {
     using SafeMath for uint256;
 
     uint256 private _profitPerShare;
@@ -43,12 +43,12 @@ abstract contract Distributable is MultiLevelTree, StandardToken {
     }
 
 
-    function distributionBonusOf(address account) public view returns(uint256) {
+    function distributionBonusOf(address account) public override view returns(uint256) {
         return (uint256) ((int256)(_profitPerShare * balanceOf(account)) - getDistributionBonusValueOf(account)) / MAGNITUDE;
     }
 
 
-    function totalBonusOf(address account) public view returns(uint256) {
+    function totalBonusOf(address account) public override view returns(uint256) {
         return directBonusOf(account) + indirectBonusOf(account) + founderBonusOf(account) + cryptoRewardBonusOf(account)
         + distributionBonusOf(account) - withdrawnAmountOf(account) - reinvestedAmountOf(account);
     }
@@ -56,11 +56,6 @@ abstract contract Distributable is MultiLevelTree, StandardToken {
 
     function calculateDistributedAmount(uint256 amount) internal pure returns(uint256) {
         return SafeMath.div(SafeMath.mul(amount, DISTRIBUTION_FEE), 100);
-    }
-
-
-    function getProfitPerShare() internal view returns(uint256) {
-        return _profitPerShare;
     }
 
 
@@ -90,13 +85,23 @@ abstract contract Distributable is MultiLevelTree, StandardToken {
         uint256 distributedBonus = calculateDistributedAmount(ethereum);
         uint256 taxedEthereum = SafeMath.sub(ethereum, distributedBonus);
 
-        int256 distributedBonusUpdate = (int256) (_profitPerShare * amountOfTokens + (taxedEthereum * MAGNITUDE));
+        int256 distributedBonusUpdate = (int256) (_profitPerShare * amountOfTokens);
         decreaseDistributionBonusValueFor(account, distributedBonusUpdate);
 
         if (totalSupply() > 0) {
             increaseProfitPerShare(distributedBonus);
         }
         return taxedEthereum;
+    }
+
+
+    function processDistributionOnTransfer(address sender, uint256 amountOfTokens, address recipient, uint256 taxedTokens) internal {
+        uint256 distributedBonus = tokensToEthereum(SafeMath.sub(amountOfTokens, taxedTokens));
+
+        decreaseDistributionBonusValueFor(sender, (int256) (_profitPerShare * amount));
+        increaseDistributionBonusValueFor(recipient, (int256) (_profitPerShare * taxedTokens));
+
+        increaseProfitPerShare(distributedBonus);
     }
 
 

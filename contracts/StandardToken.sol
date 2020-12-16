@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
 
-contract StandardToken is Context, AccessControl, Pausable {
+abstract contract StandardToken is Context, AccessControl, Pausable {
     using SafeMath for uint256;
     uint256 private _totalSupply = 0;
 
@@ -26,33 +26,39 @@ contract StandardToken is Context, AccessControl, Pausable {
     }
 
 
-    function name() public view returns (string memory) {
+    function name() public view returns(string memory) {
         return _name;
     }
 
 
-    function symbol() public view returns (string memory) {
+    function symbol() public view returns(string memory) {
         return _symbol;
     }
 
 
-    function decimals() public view returns (uint8) {
+    function decimals() public view returns(uint8) {
         return _decimals;
     }
 
 
-    function totalSupply() public view returns (uint256) {
+    function totalSupply() public view returns(uint256) {
         return _totalSupply;
     }
 
 
-    function pause() public virtual {
+    function balanceOf(address account) public virtual view returns(uint256);
+
+
+    function transfer(address recipient, uint256 amount) public virtual returns(bool);
+
+
+    function pause() public {
         require(hasRole(PAUSE_MANAGER_ROLE, msg.sender), "StandardToken: must have pauser manager role to pause");
         _pause();
     }
 
 
-    function unpause() public virtual {
+    function unpause() public {
         require(hasRole(PAUSE_MANAGER_ROLE, msg.sender), "StandardToken: must have pauser manager role to unpause");
         _unpause();
     }
@@ -60,6 +66,8 @@ contract StandardToken is Context, AccessControl, Pausable {
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal view {
         require(!paused(), "StandardToken: token transfer while paused");
+        require(from != address(0), "StandardToken: transfer from the zero address");
+        require(to != address(0), "StandardToken: transfer to the zero address");
     }
 
 

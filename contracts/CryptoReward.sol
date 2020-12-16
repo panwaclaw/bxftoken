@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./MultiLevelTree.sol";
 
 
-contract CryptoReward is MultiLevelTree {
+abstract contract CryptoReward is MultiLevelTree {
     bytes32 public constant CRYPTOREWARD_MANAGER_ROLE = keccak256("CRYPTOREWARD_MANAGER_ROLE");
 
     event PaidCryptoReward(address indexed account, uint256 ethereumPaid);

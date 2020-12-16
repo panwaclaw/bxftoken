@@ -5,9 +5,10 @@ pragma solidity ^0.7.5;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import "./StandardToken.sol";
 
 
-contract AccountStorage is AccessControl {
+abstract contract AccountStorage is StandardToken {
 
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeMath for uint256;
@@ -42,6 +43,20 @@ contract AccountStorage is AccessControl {
     modifier isRegistered() {
         require(_accountsMigrated, "AccountStorage: account data isn't migrated yet, try later");
         require(hasAccount(msg.sender), "AccountStorage: account must be registered first");
+        _;
+    }
+
+
+    modifier hasEnoughBalance(uint256 amount) {
+        require(amount <= balanceOf(msg.sender), "AccountStorage: insufficient account balance");
+        _;
+    }
+
+
+    modifier hasEnoughAvailableEther(uint256 amount) {
+        uint256 totalBonus = totalBonusOf(msg.sender);
+        require(totalBonus > 0, "AccountStorage: you don't have any available ether");
+        require(amount <= totalBonus, "AccountStorage: you don't have enough available ether to perform operation");
         _;
     }
 
@@ -143,7 +158,7 @@ contract AccountStorage is AccessControl {
     }
 
 
-    function balanceOf(address account) public view returns(uint256) {
+    function balanceOf(address account) public override view returns(uint256) {
         return _accountsData[account].balance;
     }
 
@@ -176,6 +191,12 @@ contract AccountStorage is AccessControl {
     function reinvestedAmountOf(address account) public view returns(uint256) {
         return _accountsData[account].reinvestedAmount;
     }
+
+
+    function distributionBonusOf(address account) public virtual view returns(uint256);
+
+
+    function totalBonusOf(address account) public virtual view returns(uint256);
 
 
     function increaseSelfBuyOf(address account, uint256 amount) internal {
