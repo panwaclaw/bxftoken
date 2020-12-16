@@ -98,7 +98,7 @@ abstract contract Distributable is MultiLevelTree {
     function processDistributionOnTransfer(address sender, uint256 amountOfTokens, address recipient, uint256 taxedTokens) internal {
         uint256 distributedBonus = tokensToEthereum(SafeMath.sub(amountOfTokens, taxedTokens));
 
-        decreaseDistributionBonusValueFor(sender, (int256) (_profitPerShare * amount));
+        decreaseDistributionBonusValueFor(sender, (int256) (_profitPerShare * amountOfTokens));
         increaseDistributionBonusValueFor(recipient, (int256) (_profitPerShare * taxedTokens));
 
         increaseProfitPerShare(distributedBonus);
