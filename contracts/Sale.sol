@@ -5,7 +5,7 @@ pragma solidity ^0.7.5;
 import "./AccountStorage.sol";
 
 
-contract Sale is AccountStorage {
+abstract contract Sale is AccountStorage {
 
     uint private _saleStartBlockNumber = 0;
     bytes32 public constant SALE_MANAGER_ROLE = keccak256("SALE_MANAGER_ROLE");

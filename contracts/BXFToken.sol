@@ -39,9 +39,8 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
     }
 
 
-    function sell(uint256 amountOfTokens) public isRegistered {
+    function sell(uint256 amountOfTokens) public isRegistered hasEnoughBalance(amountOfTokens) {
         address account = msg.sender;
-        require(amountOfTokens <= balanceOf(account));
 
         decreaseTotalSupply(amountOfTokens);
         decreaseBalanceOf(account, amountOfTokens);
@@ -50,34 +49,27 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
 
         uint256 taxedEthereum = processDistributionOnSell(account, amountOfTokens);
 
+        msg.sender.transfer(taxedEthereum);
+
         emit Sell(account, amountOfTokens, taxedEthereum);
     }
 
 
-    function withdraw(uint256 amountToWithdraw) public isRegistered {
-        address payable account = msg.sender;
-        uint256 totalBonus = totalBonusOf(account);
-        require(totalBonus > 0, "BXFToken: you don't have anything to withdraw");
-        require(amountToWithdraw <= totalBonusOf(account), "BXFToken: you don't have enough total bonus to withdraw");
+    function withdraw(uint256 amountToWithdraw) public isRegistered hasEnoughAvailableEther(amountToWithdraw) {
         require(amountToWithdraw <= address(this).balance, "BXFToken: insufficient contract balance");
 
+        address account = msg.sender;
         addWithdrawnAmountTo(account, amountToWithdraw);
-
-        account.transfer(amountToWithdraw);
+        msg.sender.transfer(amountToWithdraw);
 
         emit Withdraw(account, amountToWithdraw);
     }
 
 
-    function reinvest(uint256 amountToReinvest) public isRegistered {
+    function reinvest(uint256 amountToReinvest) public isRegistered hasEnoughAvailableEther(amountToReinvest) {
         address account = msg.sender;
-        uint256 totalBonus = totalBonusOf(account);
-
-        require(totalBonus > 0, "BXFToken: you don't have anything to reinvest");
-        require(amountToReinvest <= totalBonus, "BXFToken: you don't have enough total bonus to reinvest");
 
         addReinvestedAmountTo(account, amountToReinvest);
-
         uint256 amountOfTokens = purchaseTokens(account, amountToReinvest);
 
         emit Reinvestment(account, amountToReinvest, amountOfTokens);
@@ -154,35 +146,22 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
     }
 
 
-    function transfer(address recipient, uint256 amount) public virtual returns (bool) {
-        _transfer(msg.sender, recipient, amount);
-        return true;
-    }
-
-    
-    function _transfer(address sender, address recipient, uint256 amount) internal virtual {
-        require(sender != address(0), "BXFToken: transfer from the zero address");
-        require(recipient != address(0), "BXFToken: transfer to the zero address");
-        require(amount <= balanceOf(sender));
+    function transfer(address recipient, uint256 amount) public override hasEnoughBalance(amount) returns(bool) {
+        address sender = msg.sender;
 
         _beforeTokenTransfer(sender, recipient, amount);
 
-        if (totalBonusOf(sender) > 0) withdraw(totalBonusOf(sender));
-
         uint256 distributionFee = calculateDistributedAmount(amount);
         uint256 taxedTokens = SafeMath.sub(amount, distributionFee);
-        uint256 distributedBonus = tokensToEthereum(distributionFee);
 
         decreaseTotalSupply(distributionFee);
 
         decreaseBalanceOf(sender, amount);
         increaseBalanceOf(recipient, taxedTokens);
 
-        decreaseDistributionBonusValueFor(sender, (int256) (getProfitPerShare() * amount));
-        increaseDistributionBonusValueFor(recipient, (int256) (getProfitPerShare() * taxedTokens));
-        
-        increaseProfitPerShare(distributedBonus);
+        processDistributionOnTransfer(sender, amount, recipient, taxedTokens);
 
         emit Transfer(sender, recipient, taxedTokens);
+        return true;
     }
 }

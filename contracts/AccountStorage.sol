@@ -5,9 +5,10 @@ pragma solidity ^0.7.5;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import "./StandardToken.sol";
 
 
-contract AccountStorage is AccessControl {
+abstract contract AccountStorage is StandardToken {
 
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeMath for uint256;
@@ -46,52 +47,30 @@ contract AccountStorage is AccessControl {
     }
 
 
+    modifier hasEnoughBalance(uint256 amount) {
+        require(amount <= balanceOf(msg.sender), "AccountStorage: insufficient account balance");
+        _;
+    }
+
+
+    modifier hasEnoughAvailableEther(uint256 amount) {
+        uint256 totalBonus = totalBonusOf(msg.sender);
+        require(totalBonus > 0, "AccountStorage: you don't have any available ether");
+        require(amount <= totalBonus, "AccountStorage: you don't have enough available ether to perform operation");
+        _;
+    }
+
+
     constructor() {
-        address contractAddress = address(this);
-        AccountData memory accountData = AccountData({
-            sponsor: address(0),
-            balance: 0,
-            rank: 0,
-            selfBuy: 0,
-            turnover: 0,
-            maxChildTurnover: 0,
-            directBonus: 0,
-            indirectBonus: 0,
-            founderBonus: 0,
-            cryptoRewardBonus: 0,
-            reinvestedAmount: 0,
-            withdrawnAmount: 0,
-            distributionBonus: 0
-        });
-        _accountsData[contractAddress] = accountData;
+        addAccountData(address(this), address(0));
     }
 
 
     function migrateAccount(address account, address sponsor) public {
-        require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
-        require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
-
-        if (sponsor == address(0)) {
-            sponsor = address(this);
-        }
-        AccountData memory accountData = AccountData({
-            sponsor: sponsor,
-            balance: 0,
-            rank: 0,
-            selfBuy: 0,
-            turnover: 0,
-            maxChildTurnover: 0,
-            directBonus: 0,
-            indirectBonus: 0,
-            founderBonus: 0,
-            cryptoRewardBonus: 0,
-            reinvestedAmount: 0,
-            withdrawnAmount: 0,
-            distributionBonus: 0
-        });
-        _accountsData[account] = accountData;
-        _accounts.add(account);
-        emit AccountCreation(account, sponsor);
+        address[] memory data = new address[](2);
+        data[0] = account;
+        data[1] = sponsor;
+        migrateAccountsInBatch(data);
     }
 
 
@@ -106,22 +85,7 @@ contract AccountStorage is AccessControl {
             if (curSponsorAddress == address(0)) {
                 curSponsorAddress = address(this);
             }
-            AccountData memory accountData = AccountData({
-                sponsor: curSponsorAddress,
-                balance: 0,
-                rank: 0,
-                selfBuy: 0,
-                turnover: 0,
-                maxChildTurnover: 0,
-                directBonus: 0,
-                indirectBonus: 0,
-                founderBonus: 0,
-                cryptoRewardBonus: 0,
-                reinvestedAmount: 0,
-                withdrawnAmount: 0,
-                distributionBonus: 0
-            });
-            _accountsData[curAddress] = accountData;
+            addAccountData(curAddress, curSponsorAddress);
             _accounts.add(curAddress);
             emit AccountCreation(curAddress, curSponsorAddress);
         }
@@ -154,22 +118,7 @@ contract AccountStorage is AccessControl {
             require(_accounts.contains(sponsor), "AccountStorage: there's no such sponsor, consider joining with existing sponsor account or contract itself");
         }
         if (!hasAccount(account)) {
-            AccountData memory accountData = AccountData({
-                sponsor: sponsor,
-                balance: 0,
-                rank: 0,
-                selfBuy: 0,
-                turnover: 0,
-                maxChildTurnover: 0,
-                directBonus: 0,
-                indirectBonus: 0,
-                founderBonus: 0,
-                cryptoRewardBonus: 0,
-                reinvestedAmount: 0,
-                withdrawnAmount: 0,
-                distributionBonus: 0
-            });
-            _accountsData[account] = accountData;
+            addAccountData(account, sponsor);
             _accounts.add(account);
 
             emit AccountCreation(account, sponsor);
@@ -209,7 +158,7 @@ contract AccountStorage is AccessControl {
     }
 
 
-    function balanceOf(address account) public view returns(uint256) {
+    function balanceOf(address account) public override view returns(uint256) {
         return _accountsData[account].balance;
     }
 
@@ -242,6 +191,12 @@ contract AccountStorage is AccessControl {
     function reinvestedAmountOf(address account) public view returns(uint256) {
         return _accountsData[account].reinvestedAmount;
     }
+
+
+    function distributionBonusOf(address account) public virtual view returns(uint256);
+
+
+    function totalBonusOf(address account) public virtual view returns(uint256);
 
 
     function increaseSelfBuyOf(address account, uint256 amount) internal {
@@ -321,5 +276,24 @@ contract AccountStorage is AccessControl {
 
     function setRankFor(address account, uint256 rank) internal {
         _accountsData[account].rank = rank;
+    }
+
+    function addAccountData(address account, address sponsor) private {
+        AccountData memory accountData = AccountData({
+            sponsor: sponsor,
+            balance: 0,
+            rank: 0,
+            selfBuy: 0,
+            turnover: 0,
+            maxChildTurnover: 0,
+            directBonus: 0,
+            indirectBonus: 0,
+            founderBonus: 0,
+            cryptoRewardBonus: 0,
+            reinvestedAmount: 0,
+            withdrawnAmount: 0,
+            distributionBonus: 0
+        });
+        _accountsData[account] = accountData;
     }
 }

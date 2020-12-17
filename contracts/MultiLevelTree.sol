@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "./AccountStorage.sol";
 
 
-contract MultiLevelTree is AccountStorage {
+abstract contract MultiLevelTree is AccountStorage {
 
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeMath for uint256;
