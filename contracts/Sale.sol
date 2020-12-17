@@ -13,7 +13,7 @@ contract Sale is AccountStorage {
     event SaleStarted(uint atBlockNumber, uint atTimestamp);
 
     modifier canInvest(uint256 amount) {
-        require(selfBuyOf(msg.sender) + amount <= getInvestmentCap(), "Sale: you can't invest more than current investment cap");
+        require(selfBuyOf(msg.sender) + amount <= getInvestmentCap() * 90, "Sale: you can't invest more than current investment cap");
         _;
     }
 
