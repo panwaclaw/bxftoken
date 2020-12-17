@@ -196,7 +196,10 @@ abstract contract AccountStorage is StandardToken {
     function distributionBonusOf(address account) public virtual view returns(uint256);
 
 
-    function totalBonusOf(address account) public virtual view returns(uint256);
+    function totalBonusOf(address account) public view returns(uint256) {
+        return directBonusOf(account) + indirectBonusOf(account) + founderBonusOf(account) + cryptoRewardBonusOf(account)
+            + distributionBonusOf(account) - withdrawnAmountOf(account) - reinvestedAmountOf(account);
+    }
 
 
     function increaseSelfBuyOf(address account, uint256 amount) internal {
