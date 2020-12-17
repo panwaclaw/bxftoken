@@ -112,14 +112,14 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
 
         uint256 maxRankUnder = rankOf(account);
         while (account != address(this)) {
-            if (rankOf(account) - maxRankUnder > 0 && account != senderAccount) {
-                uint256 accountRank = rankOf(account);
-                uint256 indirectBonus = calculateIndirectBonus(amountOfEthereum, accountRank, maxRankUnder);
+            uint256 curRank = rankOf(account);
+            if (curRank > maxRankUnder && account != senderAccount) {
+                uint256 indirectBonus = calculateIndirectBonus(amountOfEthereum, curRank, maxRankUnder);
                 taxedEthereum = taxedEthereum.sub(indirectBonus);
                 addIndirectBonusTo(account, indirectBonus);
-                if (accountRank > maxRankUnder) {
-                    maxRankUnder = accountRank;
-                }
+
+                maxRankUnder = curRank;
+
             }
 
             account = sponsorOf(account);

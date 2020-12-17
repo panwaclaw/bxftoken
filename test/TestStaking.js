@@ -9,6 +9,7 @@ contract("BXFToken", accounts => {
         await instance.grantRole(await instance.MIGRATION_MANAGER_ROLE(), accounts[0]);
         await instance.grantRole(await instance.SALE_MANAGER_ROLE(), accounts[0]);
         await instance.finishAccountMigration({from: accounts[0]});
+
         await instance.startSale({from: accounts[0]});
         let balances = [];
         let distribution = [];
