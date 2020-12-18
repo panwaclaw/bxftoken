@@ -1,21 +1,16 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.7.5;
+pragma abicoder v2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/EnumerableSet.sol";
-import "./Company.sol";
+import "./BXFTokenBase.sol";
 import "./CryptoReward.sol";
-import "./Distributable.sol";
-import "./Founder.sol";
-import "./Sale.sol";
 
 
-contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
+contract BXFToken is BXFTokenBase, CryptoReward {
 
-    using EnumerableSet for EnumerableSet.AddressSet;
     using SafeMath for uint256;
-
     
     event Buy(address indexed account, uint256 incomingEthereum, uint256 tokensMinted);
     event Sell(address indexed account, uint256 tokensBurned, uint256 ethereumEarned);
@@ -110,28 +105,10 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
             taxedEthereum = taxedEthereum.sub(directBonus);
         }
 
-        uint256 maxRankUnder = rankOf(account);
-        while (account != address(this)) {
-            uint256 curRank = rankOf(account);
-            if (curRank > maxRankUnder && account != senderAccount) {
-                uint256 indirectBonus = calculateIndirectBonus(amountOfEthereum, curRank, maxRankUnder);
-                taxedEthereum = taxedEthereum.sub(indirectBonus);
-                addIndirectBonusTo(account, indirectBonus);
+        uint256 indirectBonus = payIndirectBonusStartingFrom(senderAccount, amountOfEthereum);
+        updateTurnoversAndRanksStartingFrom(senderAccount, amountOfEthereum);
+        taxedEthereum = taxedEthereum.sub(indirectBonus);
 
-                maxRankUnder = curRank;
-
-            }
-
-            account = sponsorOf(account);
-        }
-
-        account = senderAccount;
-        while (account != address(this)) {
-            if (account != senderAccount) increaseTurnoverOf(account, amountOfEthereum);
-            updateMaxChildTurnoverForSponsor(account);
-            tryToUpdateRank(account);
-            account = sponsorOf(account);
-        }
 
         taxedEthereum = taxedEthereum.sub(distributedBonus);
 
