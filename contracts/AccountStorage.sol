@@ -38,11 +38,14 @@ abstract contract AccountStorage is StandardToken {
 
     event AccountCreation(address indexed account, address indexed sponsor);
     event AccountMigrationFinished();
+    event FounderBonus(address indexed account, address indexed fromAccount, uint256 amountOfEthereum);
+    event DirectBonus(address indexed account, address indexed fromAccount, uint256 amountOfEthereum);
+    event IndirectBonus(address indexed account, address indexed fromAccount, uint256 amountOfEthereum);
 
 
-    modifier isRegistered() {
+    modifier isRegistered(address account) {
         require(_accountsMigrated, "AccountStorage: account data isn't migrated yet, try later");
-        require(hasAccount(msg.sender), "AccountStorage: account must be registered first");
+        require(hasAccount(account), "AccountStorage: account must be registered first");
         _;
     }
 
@@ -224,16 +227,19 @@ abstract contract AccountStorage is StandardToken {
 
     function addDirectBonusTo(address account, uint256 amount) internal {
         _accountsData[account].directBonus = _accountsData[account].directBonus.add(amount);
+        emit DirectBonus(account, msg.sender, amount);
     }
 
 
     function addIndirectBonusTo(address account, uint256 amount) internal {
         _accountsData[account].indirectBonus = _accountsData[account].indirectBonus.add(amount);
+        emit IndirectBonus(account, msg.sender, amount);
     }
 
 
     function addFounderBonusTo(address account, uint256 amount) internal {
         _accountsData[account].founderBonus = _accountsData[account].founderBonus.add(amount);
+        emit FounderBonus(account, msg.sender, amount);
     }
 
 

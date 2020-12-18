@@ -31,8 +31,8 @@ abstract contract MultiLevelTree is AccountStorage, RankSystem {
     }
 
 
-    function getRequirementsToRankUp(address account) public view returns(uint256, uint256, uint256) {
-        require(rankOf(account) + 1 < getRanksCount(), "Calculator: you've already achieved highest rank");
+    function getRequirementsToRankUp(address account) public isRegistered(account) view returns(uint256, uint256, uint256) {
+        require(rankOf(account) + 1 < getRanksCount(), "MultiLevelTree: you've already achieved highest rank");
         Rank memory reqRank = getRankDetails(rankOf(account) + 1);
         uint256 selfBuy = selfBuyOf(account);
         uint256 turnover = turnoverOf(account);

@@ -5,12 +5,13 @@ pragma abicoder v2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./Company.sol";
+import "./CryptoReward.sol";
 import "./Distributable.sol";
 import "./Founder.sol";
 import "./Sale.sol";
 
 
-abstract contract BXFTokenBase is Distributable, Founder, Company, Sale {
+abstract contract BXFTokenBase is Distributable, Founder, Company, Sale, CryptoReward {
     using SafeMath for uint256;
 
 
@@ -25,8 +26,8 @@ abstract contract BXFTokenBase is Distributable, Founder, Company, Sale {
     }
 
 
-    function calculateSpendingsOnBuy(address senderAccount, uint256 amountOfEthereum) public view returns(BuySpendings memory) {
-        BuySpendings memory spendings = SpendingsInfo({
+    function calculateSpendingsOnBuy(address senderAccount, uint256 amountOfEthereum) public isRegistered(senderAccount) view returns(BuySpendings memory) {
+        BuySpendings memory spendings = BuySpendings({
             companyFee: calculateCompanyFee(amountOfEthereum),
             directBonus: calculateDirectBonus(amountOfEthereum),
             indirectBonus: 0,

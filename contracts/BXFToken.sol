@@ -5,10 +5,9 @@ pragma abicoder v2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./BXFTokenBase.sol";
-import "./CryptoReward.sol";
 
 
-contract BXFToken is BXFTokenBase, CryptoReward {
+contract BXFToken is BXFTokenBase {
 
     using SafeMath for uint256;
     
@@ -24,17 +23,17 @@ contract BXFToken is BXFTokenBase, CryptoReward {
     }
 
 
-    fallback() external payable isRegistered {
+    fallback() external payable isRegistered(msg.sender) {
         purchaseTokens(msg.sender, msg.value);
     }
 
 
-    function buy() public payable isRegistered {
+    function buy() public payable isRegistered(msg.sender) {
         purchaseTokens(msg.sender, msg.value);
     }
 
 
-    function sell(uint256 amountOfTokens) public isRegistered hasEnoughBalance(amountOfTokens) {
+    function sell(uint256 amountOfTokens) public isRegistered(msg.sender) hasEnoughBalance(amountOfTokens) {
         address account = msg.sender;
 
         decreaseTotalSupply(amountOfTokens);
@@ -50,7 +49,7 @@ contract BXFToken is BXFTokenBase, CryptoReward {
     }
 
 
-    function withdraw(uint256 amountToWithdraw) public isRegistered hasEnoughAvailableEther(amountToWithdraw) {
+    function withdraw(uint256 amountToWithdraw) public isRegistered(msg.sender) hasEnoughAvailableEther(amountToWithdraw) {
         require(amountToWithdraw <= address(this).balance, "BXFToken: insufficient contract balance");
 
         address account = msg.sender;
@@ -61,7 +60,7 @@ contract BXFToken is BXFTokenBase, CryptoReward {
     }
 
 
-    function reinvest(uint256 amountToReinvest) public isRegistered hasEnoughAvailableEther(amountToReinvest) {
+    function reinvest(uint256 amountToReinvest) public isRegistered(msg.sender) hasEnoughAvailableEther(amountToReinvest) {
         address account = msg.sender;
 
         addReinvestedAmountTo(account, amountToReinvest);
@@ -71,7 +70,7 @@ contract BXFToken is BXFTokenBase, CryptoReward {
     }
 
 
-    function exit() public isRegistered {
+    function exit() public isRegistered(msg.sender) {
         address account = msg.sender;
         if (balanceOf(account) > 0) {
             sell(balanceOf(account));
