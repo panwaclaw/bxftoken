@@ -1,21 +1,15 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.7.5;
+pragma abicoder v2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/EnumerableSet.sol";
-import "./Company.sol";
-import "./CryptoReward.sol";
-import "./Distributable.sol";
-import "./Founder.sol";
-import "./Sale.sol";
+import "./BXFTokenBase.sol";
 
 
-contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
+contract BXFToken is BXFTokenBase {
 
-    using EnumerableSet for EnumerableSet.AddressSet;
     using SafeMath for uint256;
-
     
     event Buy(address indexed account, uint256 incomingEthereum, uint256 tokensMinted);
     event Sell(address indexed account, uint256 tokensBurned, uint256 ethereumEarned);
@@ -29,17 +23,17 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
     }
 
 
-    fallback() external payable isRegistered {
+    fallback() external payable isRegistered(msg.sender) {
         purchaseTokens(msg.sender, msg.value);
     }
 
 
-    function buy() public payable isRegistered {
+    function buy() public payable isRegistered(msg.sender) {
         purchaseTokens(msg.sender, msg.value);
     }
 
 
-    function sell(uint256 amountOfTokens) public isRegistered hasEnoughBalance(amountOfTokens) {
+    function sell(uint256 amountOfTokens) public isRegistered(msg.sender) hasEnoughBalance(amountOfTokens) {
         address account = msg.sender;
 
         decreaseTotalSupply(amountOfTokens);
@@ -55,7 +49,7 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
     }
 
 
-    function withdraw(uint256 amountToWithdraw) public isRegistered hasEnoughAvailableEther(amountToWithdraw) {
+    function withdraw(uint256 amountToWithdraw) public isRegistered(msg.sender) hasEnoughAvailableEther(amountToWithdraw) {
         require(amountToWithdraw <= address(this).balance, "BXFToken: insufficient contract balance");
 
         address account = msg.sender;
@@ -66,7 +60,7 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
     }
 
 
-    function reinvest(uint256 amountToReinvest) public isRegistered hasEnoughAvailableEther(amountToReinvest) {
+    function reinvest(uint256 amountToReinvest) public isRegistered(msg.sender) hasEnoughAvailableEther(amountToReinvest) {
         address account = msg.sender;
 
         addReinvestedAmountTo(account, amountToReinvest);
@@ -76,7 +70,7 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
     }
 
 
-    function exit() public isRegistered {
+    function exit() public isRegistered(msg.sender) {
         address account = msg.sender;
         if (balanceOf(account) > 0) {
             sell(balanceOf(account));
@@ -110,28 +104,10 @@ contract BXFToken is Distributable, CryptoReward, Founder, Company, Sale {
             taxedEthereum = taxedEthereum.sub(directBonus);
         }
 
-        uint256 maxRankUnder = rankOf(account);
-        while (account != address(this)) {
-            uint256 curRank = rankOf(account);
-            if (curRank > maxRankUnder && account != senderAccount) {
-                uint256 indirectBonus = calculateIndirectBonus(amountOfEthereum, curRank, maxRankUnder);
-                taxedEthereum = taxedEthereum.sub(indirectBonus);
-                addIndirectBonusTo(account, indirectBonus);
+        uint256 indirectBonus = payIndirectBonusStartingFrom(senderAccount, amountOfEthereum);
+        updateTurnoversAndRanksStartingFrom(senderAccount, amountOfEthereum);
+        taxedEthereum = taxedEthereum.sub(indirectBonus);
 
-                maxRankUnder = curRank;
-
-            }
-
-            account = sponsorOf(account);
-        }
-
-        account = senderAccount;
-        while (account != address(this)) {
-            if (account != senderAccount) increaseTurnoverOf(account, amountOfEthereum);
-            updateMaxChildTurnoverForSponsor(account);
-            tryToUpdateRank(account);
-            account = sponsorOf(account);
-        }
 
         taxedEthereum = taxedEthereum.sub(distributedBonus);
 

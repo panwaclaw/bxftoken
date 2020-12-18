@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.7.5;
+pragma abicoder v2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./MultiLevelTree.sol";
-import "./StandardToken.sol";
 
 
 abstract contract Distributable is MultiLevelTree {
@@ -18,39 +18,13 @@ abstract contract Distributable is MultiLevelTree {
     uint256 constant private DISTRIBUTION_FEE = 7;
 
 
-    function buyPrice() public view returns(uint256)
-    {
-        if (totalSupply() == 0){
-            return INITIAL_TOKEN_PRICE + INCREMENT_TOKEN_PRICE;
-        } else {
-            uint256 ethereum = tokensToEthereum(1 ether);
-            uint256 distributedAmount = calculateDistributedAmount(ethereum);
-            uint256 taxedEthereum = SafeMath.add(ethereum, distributedAmount);
-            return taxedEthereum;
-        }
-    }
-
-
-    function sellPrice() public view returns(uint256) {
-        if (totalSupply() == 0) {
-            return INITIAL_TOKEN_PRICE - INCREMENT_TOKEN_PRICE;
-        } else {
-            uint256 ethereum = tokensToEthereum(1 ether);
-            uint256 distributedAmount = calculateDistributedAmount(ethereum);
-            uint256 taxedEthereum = SafeMath.sub(ethereum, distributedAmount);
-            return taxedEthereum;
-        }
+    function tokenPrice() public view returns(uint256) {
+        return tokensToEthereum(1 ether);
     }
 
 
     function distributionBonusOf(address account) public override view returns(uint256) {
         return (uint256) ((int256)(_profitPerShare * balanceOf(account)) - getDistributionBonusValueOf(account)) / MAGNITUDE;
-    }
-
-
-    function totalBonusOf(address account) public override view returns(uint256) {
-        return directBonusOf(account) + indirectBonusOf(account) + founderBonusOf(account) + cryptoRewardBonusOf(account)
-        + distributionBonusOf(account) - withdrawnAmountOf(account) - reinvestedAmountOf(account);
     }
 
 

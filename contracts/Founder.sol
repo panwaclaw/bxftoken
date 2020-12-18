@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.7.5;
+pragma abicoder v2;
 
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "./MultiLevelTree.sol";
-import "./StandardToken.sol";
 
 
 abstract contract Founder is MultiLevelTree {
