@@ -69,7 +69,6 @@ contract("BXFToken", accounts => {
       let randomNumber = getRandomInt(1, accounts.length);
       await instance.addFounder(accounts[randomNumber]);
       let isFounder = await instance.isFounder(accounts[randomNumber])
-      console.log(isFounder);
       assert(isFounder === true, "something wrong with Founder add");
     }
 
@@ -97,7 +96,7 @@ contract("BXFToken", accounts => {
       let sponsorSelfBuy  = web3.utils.fromWei(await instance.selfBuyOf.call(sponsor), "ether");
 
       let oldCompanyBalance = Number(web3.utils.fromWei(await instance.companyBalance.call(), "ether"));
-      let oldAccountBalance = Number(web3.utils.fromWei(await instance.balanceOf.call(account), "ether"));
+      let oldSelfBuyOf = Number(web3.utils.fromWei(await instance.selfBuyOf.call(account), "ether"));
       let oldDirectBonus = Number(web3.utils.fromWei(await instance.directBonusOf.call(sponsor), "ether"));
       let oldFoundersBonus = 0;
       let founderNumber = 0;
@@ -112,7 +111,7 @@ contract("BXFToken", accounts => {
       await instance.send(web3.utils.toWei(etherNumber.toString(), "ether"), {from: account});
 
 
-      let newAccountBalance = Number(web3.utils.fromWei((await instance.balanceOf.call(account)), "ether"));
+      let newSelfBuyOf = Number(web3.utils.fromWei((await instance.selfBuyOf.call(account)), "ether"));
       let newCompanyBalance = Number(web3.utils.fromWei(await instance.companyBalance.call(), "ether"));
       let newDirectBonus = Number(web3.utils.fromWei(await instance.directBonusOf.call(sponsor), "ether"));
       let newFoundersBonus = 0;
@@ -147,6 +146,11 @@ contract("BXFToken", accounts => {
         console.log("OK");
       }
 
+      /* Check accout Balance */
+      console.log("check account balance");
+      console.log(oldSelfBuyOf, "/", newSelfBuyOf);
+      mustBe = Number(oldSelfBuyOf) + etherNumber;
+      assert(mustBe === newSelfBuyOf, "account balance wrong");
     }
   });
 })
