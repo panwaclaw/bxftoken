@@ -148,10 +148,10 @@ abstract contract AccountStorage is StandardToken {
             addAccountData(account, sponsor);
             _accounts.add(account);
 
-            address curAccount = sponsorOf(sponsorOf(_accounts.at(i)));
-            while (curAccount != address(0)) {
-                _accountsData[curAccount].indirectPartnersCount += 1;
-                curAccount = sponsorOf(curAccount);
+            address iterAccount = sponsorOf(sponsorOf(account));
+            while (iterAccount != address(0)) {
+                _accountsData[iterAccount].indirectPartnersCount += 1;
+                iterAccount = sponsorOf(iterAccount);
             }
 
             emit AccountCreation(account, sponsor);
