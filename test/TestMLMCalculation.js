@@ -5,40 +5,21 @@ contract("BXFToken", accounts => {
   it("LineTree test", async function () {
 
     let instance = await helpers.Deploy(accounts);
+    const contractAddress = await instance.address;
 
-    let isCreated = [];
-    await instance.createAccount("0x0000000000000000000000000000000000000000", {from: accounts[0]});
-    isCreated[0] = await instance.hasAccount(accounts[0]);
+    await helpers.createTree(instance, accounts, contractAddress);
+    await instance.startSale({from: accounts[0]});
 
-    for (let i = 1; i < accounts.length; i++) {
-      await instance.createAccount(accounts[i - 1], {from: accounts[i]});
-      isCreated[i] = await instance.hasAccount(accounts[i]);
-    }
-
+    /* Adding 3 founders */
     for (let i = 0; i < 3; i++){
       let randomNumber = helpers.getRandomInt(1, accounts.length);
       await instance.addFounder(accounts[randomNumber]);
       let isFounder = await instance.isFounder(accounts[randomNumber])
-      assert(isFounder === true, "something wrong with Founder add");
+      assert(isFounder === true, "something wrong with Founders add");
     }
 
-    for (let test = 1; test < 30; test++) {
-      let randomNumber = helpers.getRandomInt(0, accounts.length);
-      let iterAccount = accounts[randomNumber];
 
-      let contractAddress = await instance.address;
-      let counter = 0;
-      while (iterAccount !== contractAddress) {
-        counter += 1;
-        iterAccount = await instance.sponsorOf(iterAccount);
-      }
-      assert.equal(counter, randomNumber + 1, "tree was built wrong");
-      for (let i = 0; i < isCreated.length; i++) assert.equal(isCreated[i], true, i.toString() + " not created");
-    }
-
-    await instance.startSale({from: accounts[0]});
-
-    for (let test = 1; test < 30; test++) {
+    for (let test = 1; test < 100; test++) {
       console.log("test:", test);
       let random_number = helpers.getRandomInt(1, accounts.length);
       let account = accounts[random_number];
@@ -56,6 +37,7 @@ contract("BXFToken", accounts => {
       } else {
         oldFoundersBonus += 0;
       }
+
 
       let etherNumber = 1;
       await instance.buy({from: account, value: web3.utils.toWei(etherNumber.toString(), "ether")});
@@ -101,6 +83,16 @@ contract("BXFToken", accounts => {
       console.log(oldSelfBuyOf, "/", newSelfBuyOf);
       mustBe = Number(oldSelfBuyOf) + etherNumber;
       assert(mustBe === newSelfBuyOf, "account balance wrong");
+
+      /* Check deleting from founder when selling */
+      console.log("Check deleting from founder when selling");
+      for (let i = 0; i < accounts.length; i++) if (await instance.isFounder(accounts[i])) {
+        await instance.buy({from: accounts[i], value: web3.utils.toWei(etherNumber.toString(), "ether")});
+        await instance.sell(web3.utils.toWei("0.1", "ether"), {from: accounts[i]});
+        let isFounder = await instance.isFounder(accounts[i]);
+        assert(isFounder === false, "founder not deleted when sell");
+        console.log("OK");
+      }
     }
   });
 })
