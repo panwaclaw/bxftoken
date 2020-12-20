@@ -11,7 +11,7 @@ import "./Founder.sol";
 import "./Sale.sol";
 
 
-abstract contract BXFTokenBase is Distributable, Founder, Company, Sale, CryptoReward {
+abstract contract BXFTokenBase is Distributable, Company, Sale, CryptoReward {
     using SafeMath for uint256;
 
 
@@ -71,5 +71,52 @@ abstract contract BXFTokenBase is Distributable, Founder, Company, Sale, CryptoR
         spendings.amountOfTokens = ethereumToTokens(spendings.ethereumLeft);
 
         return spendings;
+    }
+
+    function calculateReturnedAmountOnSell(address senderAccount, uint256 amountOfTokens) public isRegistered(senderAccount) view returns(uint256) {
+        uint256 ethereum = tokensToEthereum(amountOfTokens);
+        uint256 distributedBonus = calculateDistributedAmount(ethereum);
+        return SafeMath.sub(ethereum, distributedBonus);
+    }
+
+
+    function purchaseTokens(address senderAccount, uint256 amountOfEthereum) internal canInvest(amountOfEthereum) returns(uint256, uint256) {
+        uint256 taxedEthereum = amountOfEthereum;
+
+        uint256 companyFee = calculateCompanyFee(amountOfEthereum);
+        uint256 directBonus = calculateDirectBonus(amountOfEthereum);
+        uint256 founderBonus = calculateFounderBonus(amountOfEthereum);
+        uint256 distributedBonus = calculateDistributedAmount(amountOfEthereum);
+
+        taxedEthereum = taxedEthereum.sub(companyFee);
+        increaseCompanyBalance(companyFee);
+
+        if (getFoundersCount() > 0) {
+            taxedEthereum = taxedEthereum.sub(founderBonus);
+            payToFounders(founderBonus);
+        }
+
+        address account = senderAccount;
+        address sponsor = sponsorOf(account);
+        increaseSelfBuyOf(account, amountOfEthereum);
+
+        if (isEligibleForDirectBonus(sponsor)) {
+            addDirectBonusTo(sponsor, directBonus);
+            taxedEthereum = taxedEthereum.sub(directBonus);
+        }
+
+        uint256 indirectBonus = payIndirectBonusStartingFrom(senderAccount, amountOfEthereum);
+        updateTurnoversAndRanksStartingFrom(senderAccount, amountOfEthereum);
+        taxedEthereum = taxedEthereum.sub(indirectBonus);
+
+
+        taxedEthereum = taxedEthereum.sub(distributedBonus);
+
+        uint256 amountOfTokens = ethereumToTokens(taxedEthereum);
+
+        processDistributionOnBuy(senderAccount, amountOfTokens, distributedBonus);
+        increaseBalanceOf(senderAccount, amountOfTokens);
+
+        return (taxedEthereum, amountOfTokens);
     }
 }

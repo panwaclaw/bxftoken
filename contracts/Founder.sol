@@ -12,6 +12,7 @@ abstract contract Founder is MultiLevelTree {
     using SafeMath for uint256;
 
     uint256 constant private FOUNDER_FEE = 1;
+    uint256 constant private FOUNDER_INVESTMENT_CAP_BONUS = 20 ether;
     bytes32 public constant FOUNDER_MANAGER_ROLE = keccak256("FOUNDER_MANAGER_ROLE");
 
     EnumerableSet.AddressSet private _founderAccounts;
@@ -54,7 +55,13 @@ abstract contract Founder is MultiLevelTree {
         }
     }
 
+
     function calculateFounderBonus(uint256 amount) internal pure returns(uint256) {
         return SafeMath.div(SafeMath.mul(amount, FOUNDER_FEE), 100);
+    }
+
+
+    function founderBonusCapFor(address account) internal view returns(uint256) {
+        return isFounder(account) ? FOUNDER_INVESTMENT_CAP_BONUS : 0;
     }
 }

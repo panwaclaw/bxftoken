@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.7.5;
+pragma abicoder v2;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -27,7 +28,17 @@ abstract contract AccountStorage is StandardToken {
         uint256 reinvestedAmount;
         uint256 withdrawnAmount;
         int256 distributionBonus;
+        uint256 directPartnersCount;
+        uint256 indirectPartnersCount;
     }
+
+
+    struct MigrationData {
+        address account;
+        address sponsor;
+        uint256 tokensToMint;
+    }
+
 
     bool private _accountsMigrated = false;
 
@@ -69,27 +80,32 @@ abstract contract AccountStorage is StandardToken {
     }
 
 
-    function migrateAccount(address account, address sponsor) public {
-        address[] memory data = new address[](2);
-        data[0] = account;
-        data[1] = sponsor;
+    function migrateAccount(address account, address sponsor, uint256 tokensToMint) public {
+        MigrationData[] memory data = new MigrationData[](1);
+        data[0] = MigrationData(account, sponsor, tokensToMint);
         migrateAccountsInBatch(data);
     }
 
 
-    function migrateAccountsInBatch(address[] memory addresses) public {
+    function migrateAccountsInBatch(MigrationData[] memory data) public {
         require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
-        require(addresses.length % 2 == 0, "AccountStorage: you must pass addesses in pairs");
+        require(data.length % 3 == 0, "AccountStorage: you must pass addesses in tuples of 3 elements");
         require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
 
-        for (uint i = 0; i < addresses.length; i += 2) {
-            address curAddress = addresses[i];
-            address curSponsorAddress = addresses[i + 1];
+        for (uint i = 0; i < data.length; i += 1) {
+            address curAddress = data[i].account;
+            address curSponsorAddress = data[i].sponsor;
+            uint256 tokensToMint = data[i].tokensToMint;
             if (curSponsorAddress == address(0)) {
                 curSponsorAddress = address(this);
             }
             addAccountData(curAddress, curSponsorAddress);
             _accounts.add(curAddress);
+
+            _accountsData[curSponsorAddress].directPartnersCount += 1;
+
+            increaseTotalSupply(tokensToMint);
+            increaseBalanceOf(curAddress, tokensToMint);
             emit AccountCreation(curAddress, curSponsorAddress);
         }
     }
@@ -103,6 +119,14 @@ abstract contract AccountStorage is StandardToken {
     function finishAccountMigration() public {
         require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
         require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
+
+        for (uint i = 0; i <= _accounts.length(); i++) {
+            address curAccount = sponsorOf(sponsorOf(_accounts.at(i)));
+            while (curAccount != address(0)) {
+                _accountsData[curAccount].indirectPartnersCount += 1;
+                curAccount = sponsorOf(curAccount);
+            }
+        }
 
         _accountsMigrated = true;
         emit AccountMigrationFinished();
@@ -124,6 +148,12 @@ abstract contract AccountStorage is StandardToken {
             addAccountData(account, sponsor);
             _accounts.add(account);
 
+            address iterAccount = sponsorOf(sponsorOf(account));
+            while (iterAccount != address(0)) {
+                _accountsData[iterAccount].indirectPartnersCount += 1;
+                iterAccount = sponsorOf(iterAccount);
+            }
+
             emit AccountCreation(account, sponsor);
             return true;
         }
@@ -138,6 +168,16 @@ abstract contract AccountStorage is StandardToken {
 
     function hasAccount(address account) public view returns(bool) {
         return _accounts.contains(account);
+    }
+
+
+    function directPartnersCountOf(address account) public view returns(uint256) {
+        return _accountsData[account].directPartnersCount;
+    }
+
+
+    function indirectPartnersCountOf(address account) public view returns(uint256) {
+        return _accountsData[account].indirectPartnersCount;
     }
 
 
@@ -301,7 +341,9 @@ abstract contract AccountStorage is StandardToken {
             cryptoRewardBonus: 0,
             reinvestedAmount: 0,
             withdrawnAmount: 0,
-            distributionBonus: 0
+            distributionBonus: 0,
+            directPartnersCount: 0,
+            indirectPartnersCount: 0
         });
         _accountsData[account] = accountData;
     }
