@@ -28,6 +28,8 @@ abstract contract AccountStorage is StandardToken {
         uint256 reinvestedAmount;
         uint256 withdrawnAmount;
         int256 distributionBonus;
+        uint256 directPartnersCount;
+        uint256 indirectPartnersCount;
     }
 
 
@@ -115,6 +117,14 @@ abstract contract AccountStorage is StandardToken {
         require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
         require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
 
+        for (uint i = 0; i <= _accounts.length(); i++) {
+            address curAccount = sponsorOf(sponsorOf(_accounts.at(i)));
+            while (curAccount != address(0)) {
+                _accountsData[curAccount].indirectPartnersCount += 1;
+                curAccount = sponsorOf(curAccount);
+            }
+        }
+
         _accountsMigrated = true;
         emit AccountMigrationFinished();
     }
@@ -149,6 +159,16 @@ abstract contract AccountStorage is StandardToken {
 
     function hasAccount(address account) public view returns(bool) {
         return _accounts.contains(account);
+    }
+
+
+    function directPartnersCountOf(address account) public view returns(uint256) {
+        return _accountsData[account].directPartnersCount;
+    }
+
+
+    function indirectPartnersCountOf(address account) public view returns(uint256) {
+        return _accountsData[account].indirectPartnersCount;
     }
 
 
@@ -312,7 +332,9 @@ abstract contract AccountStorage is StandardToken {
             cryptoRewardBonus: 0,
             reinvestedAmount: 0,
             withdrawnAmount: 0,
-            distributionBonus: 0
+            distributionBonus: 0,
+            directPartnersCount: 0,
+            indirectPartnersCount: 0
         });
         _accountsData[account] = accountData;
     }
