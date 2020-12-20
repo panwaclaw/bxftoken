@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.7.5;
+pragma abicoder v2;
 
-import "./AccountStorage.sol";
+import "./Founder.sol";
 
 
-abstract contract Sale is AccountStorage {
+abstract contract Sale is Founder {
+    using SafeMath for uint256;
 
     uint private _saleStartBlockNumber = 0;
     bytes32 public constant SALE_MANAGER_ROLE = keccak256("SALE_MANAGER_ROLE");
@@ -13,7 +15,7 @@ abstract contract Sale is AccountStorage {
     event SaleStarted(uint atBlockNumber, uint atTimestamp);
 
     modifier canInvest(uint256 amount) {
-        require(selfBuyOf(msg.sender) + amount <= getInvestmentCap() * 90, "Sale: you can't invest more than current investment cap");
+        require(selfBuyOf(msg.sender) + amount <= getInvestmentCap() + founderBonusCapFor(msg.sender), "Sale: you can't invest more than current investment cap");
         _;
     }
 
@@ -37,5 +39,12 @@ abstract contract Sale is AccountStorage {
         _saleStartBlockNumber = block.number;
 
         emit SaleStarted(block.number, block.timestamp);
+    }
+
+    function moveSaleForwardBy(uint256 blocks) public {
+        require(hasRole(SALE_MANAGER_ROLE, msg.sender), "Sale: must have sale manager role");
+        require(_saleStartBlockNumber > 0, "Sale: sale forward move method is not available yet, start sale first");
+
+        _saleStartBlockNumber = _saleStartBlockNumber.sub(blocks);
     }
 }
