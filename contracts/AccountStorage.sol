@@ -101,6 +101,9 @@ abstract contract AccountStorage is StandardToken {
             }
             addAccountData(curAddress, curSponsorAddress);
             _accounts.add(curAddress);
+
+            _accountsData[curSponsorAddress].directPartnersCount += 1;
+
             increaseTotalSupply(tokensToMint);
             increaseBalanceOf(curAddress, tokensToMint);
             emit AccountCreation(curAddress, curSponsorAddress);
@@ -144,6 +147,12 @@ abstract contract AccountStorage is StandardToken {
         if (!hasAccount(account)) {
             addAccountData(account, sponsor);
             _accounts.add(account);
+
+            address curAccount = sponsorOf(sponsorOf(_accounts.at(i)));
+            while (curAccount != address(0)) {
+                _accountsData[curAccount].indirectPartnersCount += 1;
+                curAccount = sponsorOf(curAccount);
+            }
 
             emit AccountCreation(account, sponsor);
             return true;
