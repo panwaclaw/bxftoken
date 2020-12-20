@@ -120,7 +120,7 @@ abstract contract AccountStorage is StandardToken {
         require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
         require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
 
-        for (uint i = 0; i <= _accounts.length(); i++) {
+        for (uint i = 0; i < _accounts.length(); i++) {
             address curAccount = sponsorOf(sponsorOf(_accounts.at(i)));
             while (curAccount != address(0)) {
                 _accountsData[curAccount].indirectPartnersCount += 1;

@@ -1,12 +1,9 @@
-const BXFToken = artifacts.require("BXFToken");
+const helpers = require('./helpers');
 
 contract("BXFToken", accounts => {
     it("CreationAccounts test", async function() {
 
-        let instance = await BXFToken.deployed();
-        await instance.grantRole(await instance.MIGRATION_MANAGER_ROLE(), accounts[0]);
-        await instance.grantRole(await instance.SALE_MANAGER_ROLE(), accounts[0]);
-        await instance.finishAccountMigration({from: accounts[0]});
+        let instance = await helpers.Deploy(accounts);
 
         let isCreated = [];
         await instance.createAccount("0x0000000000000000000000000000000000000000", {from: accounts[0]});

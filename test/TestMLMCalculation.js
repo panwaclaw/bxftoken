@@ -1,60 +1,10 @@
-//import  Deploy  from "/test/helpers.js"
-
-const BXFToken = artifacts.require("BXFToken");
 const web3 = require('web3');
-
-function getRandomInt(min, max) {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min)) + min; //Максимум не включается, минимум включается
-}
-
-async function Deploy(accounts) {
-  let instance = await BXFToken.deployed();
-  await instance.grantRole(await instance.MIGRATION_MANAGER_ROLE(), accounts[0]);
-  await instance.grantRole(await instance.SALE_MANAGER_ROLE(), accounts[0]);
-  await instance.finishAccountMigration({from: accounts[0]});
-  return instance;
-}
-
-
-class AccountData {
-  constructor(props) {
-    /*this.sponsor = ;
-    this.balance;
-    uint256 selfBuy;
-    uint rank;
-    uint256 turnover;
-    uint256 maxChildTurnover;
-    uint256 directBonus;
-    uint256 indirectBonus;
-    uint256 founderBonus;
-    uint256 cryptoRewardBonus;
-    uint256 reinvestedAmount;
-    uint256 withdrawnAmount;
-    int256 distributionBonus;
-    */
-  }
-
-}
-
-/*contract("BXFToken", accounts => {
-  it("FirstBuy", async function () {
-    let instance = Deploy(accounts);
-
-
-  })
-})*/
-
+const helpers = require('./helpers');
 
 contract("BXFToken", accounts => {
   it("LineTree test", async function () {
 
-    let instance = await BXFToken.deployed();
-    await instance.grantRole(await instance.MIGRATION_MANAGER_ROLE(), accounts[0]);
-    await instance.grantRole(await instance.SALE_MANAGER_ROLE(), accounts[0]);
-    await instance.grantRole(await instance.FOUNDER_MANAGER_ROLE(), accounts[0]);
-    await instance.finishAccountMigration({from: accounts[0]});
+    let instance = await helpers.Deploy(accounts);
 
     let isCreated = [];
     await instance.createAccount("0x0000000000000000000000000000000000000000", {from: accounts[0]});
@@ -66,14 +16,14 @@ contract("BXFToken", accounts => {
     }
 
     for (let i = 0; i < 3; i++){
-      let randomNumber = getRandomInt(1, accounts.length);
+      let randomNumber = helpers.getRandomInt(1, accounts.length);
       await instance.addFounder(accounts[randomNumber]);
       let isFounder = await instance.isFounder(accounts[randomNumber])
       assert(isFounder === true, "something wrong with Founder add");
     }
 
     for (let test = 1; test < 30; test++) {
-      let randomNumber = getRandomInt(0, accounts.length);
+      let randomNumber = helpers.getRandomInt(0, accounts.length);
       let iterAccount = accounts[randomNumber];
 
       let contractAddress = await instance.address;
@@ -90,7 +40,7 @@ contract("BXFToken", accounts => {
 
     for (let test = 1; test < 30; test++) {
       console.log("test:", test);
-      let random_number = getRandomInt(1, accounts.length);
+      let random_number = helpers.getRandomInt(1, accounts.length);
       let account = accounts[random_number];
       let sponsor = await instance.sponsorOf(account);
       let sponsorSelfBuy  = web3.utils.fromWei(await instance.selfBuyOf.call(sponsor), "ether");
@@ -108,7 +58,7 @@ contract("BXFToken", accounts => {
       }
 
       let etherNumber = 1;
-      await instance.send(web3.utils.toWei(etherNumber.toString(), "ether"), {from: account});
+      await instance.buy({from: account, value: web3.utils.toWei(etherNumber.toString(), "ether")});
 
 
       let newSelfBuyOf = Number(web3.utils.fromWei((await instance.selfBuyOf.call(account)), "ether"));
