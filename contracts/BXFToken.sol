@@ -23,7 +23,9 @@ contract BXFToken is BXFTokenBase {
     }
 
 
-    fallback() external payable {}
+    fallback() external payable {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXFToken: you're not allowed to do this");
+    }
 
 
     function buy() public payable isRegistered(msg.sender) {

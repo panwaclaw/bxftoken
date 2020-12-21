@@ -37,6 +37,8 @@ abstract contract AccountStorage is StandardToken {
         address account;
         address sponsor;
         uint256 tokensToMint;
+        uint256 directPartnersCount;
+        uint256 indirectPartnersCount;
     }
 
 
@@ -80,29 +82,30 @@ abstract contract AccountStorage is StandardToken {
     }
 
 
-    function migrateAccount(address account, address sponsor, uint256 tokensToMint) public {
+    function migrateAccount(address account, address sponsor, uint256 tokensToMint, uint256 directPartnersCount, uint256 indirectPartnersCount) public {
         MigrationData[] memory data = new MigrationData[](1);
-        data[0] = MigrationData(account, sponsor, tokensToMint);
+        data[0] = MigrationData(account, sponsor, tokensToMint, directPartnersCount, indirectPartnersCount);
         migrateAccountsInBatch(data);
     }
 
 
     function migrateAccountsInBatch(MigrationData[] memory data) public {
         require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
-        require(data.length % 3 == 0, "AccountStorage: you must pass addesses in tuples of 3 elements");
         require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
 
         for (uint i = 0; i < data.length; i += 1) {
             address curAddress = data[i].account;
             address curSponsorAddress = data[i].sponsor;
             uint256 tokensToMint = data[i].tokensToMint;
+            uint256 directPartnersCount = data[i].directPartnersCount;
+            uint256 indirectPartnersCount = data[i].indirectPartnersCount;
             if (curSponsorAddress == address(0)) {
                 curSponsorAddress = address(this);
             }
             addAccountData(curAddress, curSponsorAddress);
+            _accountsData[curAddress].directPartnersCount = directPartnersCount;
+            _accountsData[curAddress].indirectPartnersCount = indirectPartnersCount;
             _accounts.add(curAddress);
-
-            _accountsData[curSponsorAddress].directPartnersCount += 1;
 
             increaseTotalSupply(tokensToMint);
             increaseBalanceOf(curAddress, tokensToMint);
@@ -119,14 +122,6 @@ abstract contract AccountStorage is StandardToken {
     function finishAccountMigration() public {
         require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
         require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
-
-        for (uint i = 0; i < _accounts.length(); i++) {
-            address curAccount = sponsorOf(sponsorOf(_accounts.at(i)));
-            while (curAccount != address(0)) {
-                _accountsData[curAccount].indirectPartnersCount += 1;
-                curAccount = sponsorOf(curAccount);
-            }
-        }
 
         _accountsMigrated = true;
         emit AccountMigrationFinished();
@@ -148,11 +143,7 @@ abstract contract AccountStorage is StandardToken {
             addAccountData(account, sponsor);
             _accounts.add(account);
 
-            address iterAccount = sponsorOf(sponsorOf(account));
-            while (iterAccount != address(0)) {
-                _accountsData[iterAccount].indirectPartnersCount += 1;
-                iterAccount = sponsorOf(iterAccount);
-            }
+            updatePartnerCountersFrom(account);
 
             emit AccountCreation(account, sponsor);
             return true;
@@ -327,6 +318,7 @@ abstract contract AccountStorage is StandardToken {
         _accountsData[account].rank = rank;
     }
 
+
     function addAccountData(address account, address sponsor) private {
         AccountData memory accountData = AccountData({
             sponsor: sponsor,
@@ -346,5 +338,17 @@ abstract contract AccountStorage is StandardToken {
             indirectPartnersCount: 0
         });
         _accountsData[account] = accountData;
+    }
+
+
+    function updatePartnerCountersFrom(address account) private {
+        address iterAccount = sponsorOf(account);
+        _accountsData[iterAccount].directPartnersCount += 1;
+
+        iterAccount = sponsorOf(iterAccount);
+        while (iterAccount != address(0)) {
+            _accountsData[iterAccount].indirectPartnersCount += 1;
+            iterAccount = sponsorOf(iterAccount);
+        }
     }
 }

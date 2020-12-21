@@ -37,7 +37,7 @@ abstract contract MultiLevelTree is AccountStorage, RankSystem {
         uint256 selfBuy = selfBuyOf(account);
         uint256 turnover = turnoverOf(account);
         uint256 maxChildTurnover = maxChildTurnoverOf(account);
-        uint256 reqRankSplitTurnover = SafeMath.div(SafeMath.mul(reqRank.turnover, reqRank.splitRulePercent), 100);
+        uint256 reqRankSplitTurnover = SafeMath.div(SafeMath.mul(turnover, reqRank.splitRulePercent), 100);
         uint256 reqSelfBuy = (selfBuy < reqRank.selfBuy) ? (reqRank.selfBuy - selfBuy) : 0;
         uint256 reqTurnover = (turnover < reqRank.turnover) ? (reqRank.turnover - turnover) : 0;
         uint256 reqTurnoverSplit = (reqRankSplitTurnover < maxChildTurnover) ? (maxChildTurnover - reqRankSplitTurnover) : 0;
