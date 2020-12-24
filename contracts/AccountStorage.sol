@@ -18,18 +18,10 @@ abstract contract AccountStorage is StandardToken {
         address sponsor;
         uint256 balance;
         uint256 selfBuy;
-        uint rank;
-        uint256 turnover;
-        uint256 maxChildTurnover;
         uint256 directBonus;
-        uint256 indirectBonus;
-        uint256 founderBonus;
-        uint256 cryptoRewardBonus;
         uint256 reinvestedAmount;
         uint256 withdrawnAmount;
-        int256 distributionBonus;
-        uint256 directPartnersCount;
-        uint256 indirectPartnersCount;
+        int256 stakingValue;
     }
 
 
@@ -37,8 +29,6 @@ abstract contract AccountStorage is StandardToken {
         address account;
         address sponsor;
         uint256 tokensToMint;
-        uint256 directPartnersCount;
-        uint256 indirectPartnersCount;
     }
 
 
@@ -47,13 +37,11 @@ abstract contract AccountStorage is StandardToken {
     EnumerableSet.AddressSet private _accounts;
     mapping (address => AccountData) private _accountsData;
 
-    bytes32 public constant MIGRATION_MANAGER_ROLE = keccak256("MIGRATION_MANAGER_ROLE");
+    bytes32 constant public MIGRATION_MANAGER_ROLE = keccak256("MIGRATION_MANAGER_ROLE");
 
     event AccountCreation(address indexed account, address indexed sponsor);
     event AccountMigrationFinished();
-    event FounderBonus(address indexed account, address indexed fromAccount, uint256 amountOfEthereum);
     event DirectBonus(address indexed account, address indexed fromAccount, uint256 amountOfEthereum);
-    event IndirectBonus(address indexed account, address indexed fromAccount, uint256 amountOfEthereum);
 
 
     modifier isRegistered(address account) {
@@ -82,9 +70,9 @@ abstract contract AccountStorage is StandardToken {
     }
 
 
-    function migrateAccount(address account, address sponsor, uint256 tokensToMint, uint256 directPartnersCount, uint256 indirectPartnersCount) public {
+    function migrateAccount(address account, address sponsor, uint256 tokensToMint) public {
         MigrationData[] memory data = new MigrationData[](1);
-        data[0] = MigrationData(account, sponsor, tokensToMint, directPartnersCount, indirectPartnersCount);
+        data[0] = MigrationData(account, sponsor, tokensToMint);
         migrateAccountsInBatch(data);
     }
 
@@ -97,14 +85,10 @@ abstract contract AccountStorage is StandardToken {
             address curAddress = data[i].account;
             address curSponsorAddress = data[i].sponsor;
             uint256 tokensToMint = data[i].tokensToMint;
-            uint256 directPartnersCount = data[i].directPartnersCount;
-            uint256 indirectPartnersCount = data[i].indirectPartnersCount;
             if (curSponsorAddress == address(0)) {
                 curSponsorAddress = address(this);
             }
             addAccountData(curAddress, curSponsorAddress);
-            _accountsData[curAddress].directPartnersCount = directPartnersCount;
-            _accountsData[curAddress].indirectPartnersCount = indirectPartnersCount;
             _accounts.add(curAddress);
 
             increaseTotalSupply(tokensToMint);
@@ -143,8 +127,6 @@ abstract contract AccountStorage is StandardToken {
             addAccountData(account, sponsor);
             _accounts.add(account);
 
-            updatePartnerCountersFrom(account);
-
             emit AccountCreation(account, sponsor);
             return true;
         }
@@ -162,16 +144,6 @@ abstract contract AccountStorage is StandardToken {
     }
 
 
-    function directPartnersCountOf(address account) public view returns(uint256) {
-        return _accountsData[account].directPartnersCount;
-    }
-
-
-    function indirectPartnersCountOf(address account) public view returns(uint256) {
-        return _accountsData[account].indirectPartnersCount;
-    }
-
-
     function sponsorOf(address account) public view returns(address) {
         return _accountsData[account].sponsor;
     }
@@ -179,16 +151,6 @@ abstract contract AccountStorage is StandardToken {
 
     function selfBuyOf(address account) public view returns(uint256) {
         return _accountsData[account].selfBuy;
-    }
-
-
-    function turnoverOf(address account) public view returns(uint256) {
-        return _accountsData[account].turnover;
-    }
-
-
-    function rankOf(address account) public view returns(uint) {
-        return _accountsData[account].rank;
     }
 
 
@@ -202,21 +164,6 @@ abstract contract AccountStorage is StandardToken {
     }
 
 
-    function indirectBonusOf(address account) public view returns(uint256) {
-        return _accountsData[account].indirectBonus;
-    }
-
-
-    function founderBonusOf(address account) public view returns(uint256) {
-        return _accountsData[account].founderBonus;
-    }
-
-
-    function cryptoRewardBonusOf(address account) public view returns(uint256) {
-        return _accountsData[account].cryptoRewardBonus;
-    }
-
-
     function withdrawnAmountOf(address account) public view returns(uint256) {
         return _accountsData[account].withdrawnAmount;
     }
@@ -227,22 +174,16 @@ abstract contract AccountStorage is StandardToken {
     }
 
 
-    function distributionBonusOf(address account) public virtual view returns(uint256);
+    function stakingBonusOf(address account) public virtual view returns(uint256);
 
 
     function totalBonusOf(address account) public view returns(uint256) {
-        return directBonusOf(account) + indirectBonusOf(account) + founderBonusOf(account) + cryptoRewardBonusOf(account)
-            + distributionBonusOf(account) - withdrawnAmountOf(account) - reinvestedAmountOf(account);
+        return directBonusOf(account) + stakingBonusOf(account) - withdrawnAmountOf(account) - reinvestedAmountOf(account);
     }
 
 
     function increaseSelfBuyOf(address account, uint256 amount) internal {
         _accountsData[account].selfBuy =_accountsData[account].selfBuy.add(amount);
-    }
-
-
-    function increaseTurnoverOf(address account, uint256 amount) internal {
-        _accountsData[account].turnover = _accountsData[account].turnover.add(amount);
     }
 
 
@@ -262,23 +203,6 @@ abstract contract AccountStorage is StandardToken {
     }
 
 
-    function addIndirectBonusTo(address account, uint256 amount) internal {
-        _accountsData[account].indirectBonus = _accountsData[account].indirectBonus.add(amount);
-        emit IndirectBonus(account, msg.sender, amount);
-    }
-
-
-    function addFounderBonusTo(address account, uint256 amount) internal {
-        _accountsData[account].founderBonus = _accountsData[account].founderBonus.add(amount);
-        emit FounderBonus(account, msg.sender, amount);
-    }
-
-
-    function addCryptoRewardBonusTo(address account, uint256 amount) internal {
-        _accountsData[account].cryptoRewardBonus = _accountsData[account].cryptoRewardBonus.add(amount);
-    }
-
-
     function addWithdrawnAmountTo(address account, uint256 amount) internal {
         _accountsData[account].withdrawnAmount = _accountsData[account].withdrawnAmount.add(amount);
     }
@@ -289,33 +213,18 @@ abstract contract AccountStorage is StandardToken {
     }
 
 
-    function getDistributionBonusValueOf(address account) internal view returns(int256) {
-        return _accountsData[account].distributionBonus;
+    function stakingValueOf(address account) internal view returns(int256) {
+        return _accountsData[account].stakingValue;
     }
 
 
-    function increaseDistributionBonusValueFor(address account, int256 amount) internal {
-        _accountsData[account].distributionBonus += amount;
+    function increaseStakingValueFor(address account, int256 amount) internal {
+        _accountsData[account].stakingValue += amount;
     }
 
 
-    function decreaseDistributionBonusValueFor(address account, int256 amount) internal {
-        _accountsData[account].distributionBonus -= amount;
-    }
-
-
-    function maxChildTurnoverOf(address account) internal view returns(uint256) {
-        return _accountsData[account].maxChildTurnover;
-    }
-
-
-    function setMaxChildTurnoverFor(address account, uint256 amount) internal {
-        _accountsData[account].maxChildTurnover = amount;
-    }
-
-
-    function setRankFor(address account, uint256 rank) internal {
-        _accountsData[account].rank = rank;
+    function decreaseStakingValueFor(address account, int256 amount) internal {
+        _accountsData[account].stakingValue -= amount;
     }
 
 
@@ -323,32 +232,13 @@ abstract contract AccountStorage is StandardToken {
         AccountData memory accountData = AccountData({
             sponsor: sponsor,
             balance: 0,
-            rank: 0,
             selfBuy: 0,
-            turnover: 0,
-            maxChildTurnover: 0,
             directBonus: 0,
-            indirectBonus: 0,
-            founderBonus: 0,
-            cryptoRewardBonus: 0,
             reinvestedAmount: 0,
             withdrawnAmount: 0,
-            distributionBonus: 0,
-            directPartnersCount: 0,
-            indirectPartnersCount: 0
+            stakingValue: 0,
+            founderIndex: 0
         });
         _accountsData[account] = accountData;
-    }
-
-
-    function updatePartnerCountersFrom(address account) private {
-        address iterAccount = sponsorOf(account);
-        _accountsData[iterAccount].directPartnersCount += 1;
-
-        iterAccount = sponsorOf(iterAccount);
-        while (iterAccount != address(0)) {
-            _accountsData[iterAccount].indirectPartnersCount += 1;
-            iterAccount = sponsorOf(iterAccount);
-        }
     }
 }

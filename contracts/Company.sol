@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 contract Company is AccessControl {
     using SafeMath for uint256;
 
-    uint256 constant private COMPANY_FEE = 30;
+    uint256 constant private COMPANY_FEE = 41;
     uint256 private _companyBalance = 0;
 
     event CompanyWithdraw(address indexed account, uint256 amount);

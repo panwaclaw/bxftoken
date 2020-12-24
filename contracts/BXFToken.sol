@@ -40,9 +40,7 @@ contract BXFToken is BXFTokenBase {
         decreaseTotalSupply(amountOfTokens);
         decreaseBalanceOf(account, amountOfTokens);
 
-        if (isFounder(account)) dropFounder(account);
-
-        uint256 taxedEthereum = processDistributionOnSell(account, amountOfTokens);
+        uint256 taxedEthereum = processStakingOnSell(account, amountOfTokens);
 
         msg.sender.transfer(taxedEthereum);
 
@@ -85,10 +83,10 @@ contract BXFToken is BXFTokenBase {
 
         _beforeTokenTransfer(sender, recipient, amount);
 
-        uint256 distributionFee = calculateDistributedAmount(amount);
-        uint256 taxedTokens = SafeMath.sub(amount, distributionFee);
+        uint256 stakingFee = calculateStakingFee(amount);
+        uint256 taxedTokens = SafeMath.sub(amount, stakingFee);
 
-        decreaseTotalSupply(distributionFee);
+        decreaseTotalSupply(stakingFee);
 
         decreaseBalanceOf(sender, amount);
         increaseBalanceOf(recipient, taxedTokens);
