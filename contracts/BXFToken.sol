@@ -40,6 +40,8 @@ contract BXFToken is BXFTokenBase {
         decreaseTotalSupply(amountOfTokens);
         decreaseBalanceOf(account, amountOfTokens);
 
+        if (isFounder(account)) dropFounderOnSell(account);
+
         uint256 taxedEthereum = processStakingOnSell(account, amountOfTokens);
 
         msg.sender.transfer(taxedEthereum);

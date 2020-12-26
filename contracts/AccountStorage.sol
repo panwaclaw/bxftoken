@@ -236,8 +236,7 @@ abstract contract AccountStorage is StandardToken {
             directBonus: 0,
             reinvestedAmount: 0,
             withdrawnAmount: 0,
-            stakingValue: 0,
-            founderIndex: 0
+            stakingValue: 0
         });
         _accountsData[account] = accountData;
     }

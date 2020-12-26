@@ -33,6 +33,11 @@ abstract contract Founder is AccountStorage {
     }
 
 
+    function dropFounderOnSell(address account) internal returns(bool) {
+        return _founderAccounts.remove(account);
+    }
+
+
     function founderBonusCapFor(address account) internal view returns(uint256) {
         return isFounder(account) ? FOUNDER_INVESTMENT_CAP_BONUS : 0;
     }
