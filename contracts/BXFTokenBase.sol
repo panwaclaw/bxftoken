@@ -105,9 +105,9 @@ abstract contract BXFTokenBase is Distributable, Company, Sale, CryptoReward {
             taxedEthereum = taxedEthereum.sub(directBonus);
         }
 
-        uint256 indirectBonus = payIndirectBonusStartingFrom(senderAccount, amountOfEthereum);
-        updateTurnoversAndRanksStartingFrom(senderAccount, amountOfEthereum);
-        taxedEthereum = taxedEthereum.sub(indirectBonus);
+        //uint256 indirectBonus = payIndirectBonusStartingFrom(senderAccount, amountOfEthereum);
+        //updateTurnoversAndRanksStartingFrom(senderAccount, amountOfEthereum);
+        //taxedEthereum = taxedEthereum.sub(indirectBonus);
 
 
         taxedEthereum = taxedEthereum.sub(distributedBonus);

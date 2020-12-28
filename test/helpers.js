@@ -1,3 +1,4 @@
+const web3 = require('web3');
 const BXFToken = artifacts.require("BXFToken");
 
 module.exports = {
@@ -16,17 +17,26 @@ module.exports = {
     return instance;
   },
 
-  createTree: async function (instance, accounts, contractAddress) {
+  createTree: async function (instance, accounts, contractAddress, parents = []) {
     let isCreated = [];
+
     await instance.createAccount("0x0000000000000000000000000000000000000000", {from: accounts[0]});
     isCreated[0] = await instance.hasAccount(accounts[0]);
+    parents[0] = -1;
 
-    let parents = [];
-    for (let i = 1; i < accounts.length; i++) {
-      let randomNumber = this.getRandomInt(0, i - 1);
-      parents[i] = randomNumber;
-      await instance.createAccount(accounts[randomNumber], {from: accounts[i]});
-      isCreated[i] = await instance.hasAccount(accounts[i]);
+    console.log(parents);
+    if (parents.length > 1){
+      for (let i = 1; i < accounts.length; i++){
+        await instance.createAccount(accounts[parents[i]], {from: accounts[i]});
+        isCreated[i] = await instance.hasAccount(accounts[i]);
+      }
+    } else {
+      for (let i = 1; i < accounts.length; i++) {
+        let randomNumber = this.getRandomInt(0, i - 1);
+        parents[i] = randomNumber;
+        await instance.createAccount(accounts[randomNumber], {from: accounts[i]});
+        isCreated[i] = await instance.hasAccount(accounts[i]);
+      }
     }
 
     for (let i = 0; i < isCreated.length; i++) assert.equal(isCreated[i], true, i.toString() + " not created");
@@ -45,5 +55,29 @@ module.exports = {
     }
 
     return parents;
+  },
+
+  generateTransaction : async function(accounts, count , instance) {
+    let res = [];
+    for (let i = 0; i < count; i++) {
+      let type = this.getRandomInt(0, 4);
+      let account = this.getRandomInt(0, accounts.length);
+      if (type <= 2) {
+        let tokenAmount = 25 * Math.random();
+        res.push(["buy", account, tokenAmount]);
+      } else {
+        let balanceOf = Number(web3.utils.fromWei(await instance.selfBuyOf.call(accounts[account]), "ether"));
+        let index = Math.random();
+        res.push(["sell", account, index * balanceOf]);
+      }
+    }
+    return res;
+  },
+
+  getCanSell : async  function(accounts, accountIndex, instance){
+    let index = Math.random();
+    let numberTokens = Number(web3.utils.fromWei(await instance.selfBuyOf.call(accounts[accountIndex]), "ether"));
+    numberTokens *= index;
+    return numberTokens;
   }
 };

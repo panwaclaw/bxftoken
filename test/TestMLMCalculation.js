@@ -88,7 +88,8 @@ contract("BXFToken", accounts => {
       console.log("Check deleting from founder when selling");
       for (let i = 0; i < accounts.length; i++) if (await instance.isFounder(accounts[i])) {
         await instance.buy({from: accounts[i], value: web3.utils.toWei(etherNumber.toString(), "ether")});
-        await instance.sell(web3.utils.toWei("0.1", "ether"), {from: accounts[i]});
+        let numberTokens = await helpers.getCanSell(accounts, i, instance);
+        await instance.sell(web3.utils.toWei(numberTokens.toString(), "ether"), {from: accounts[i]});
         let isFounder = await instance.isFounder(accounts[i]);
         assert(isFounder === false, "founder not deleted when sell");
         console.log("OK");
