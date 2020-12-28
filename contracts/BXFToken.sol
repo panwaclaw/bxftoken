@@ -11,9 +11,9 @@ contract BXFToken is BXFTokenBase {
 
     using SafeMath for uint256;
     
-    event Buy(address indexed account, uint256 incomingEthereum, uint256 tokensMinted);
-    event Sell(address indexed account, uint256 tokensBurned, uint256 ethereumEarned);
-    event Reinvestment(address indexed account, uint256 ethereumReinvested, uint256 tokensMinted);
+    event Buy(address indexed account, uint256 ethereumInvested, uint256 taxedEthereum, uint256 tokensMinted);
+    event Sell(address indexed account, uint256 tokensSold, uint256 ethereumEarned);
+    event Reinvestment(address indexed account, uint256 ethereumReinvested, uint256 tokensBought);
     event Withdraw(address indexed account, uint256 ethereumWithdrawn);
     event Transfer(address indexed from, address indexed to, uint256 value);
 
@@ -30,7 +30,7 @@ contract BXFToken is BXFTokenBase {
 
     function buy() public payable isRegistered(msg.sender) {
         (uint256 taxedEthereum, uint256 amountOfTokens) = purchaseTokens(msg.sender, msg.value);
-        emit Buy(msg.sender, taxedEthereum, amountOfTokens);
+        emit Buy(msg.sender, msg.value, taxedEthereum, amountOfTokens);
     }
 
 
