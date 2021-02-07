@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.7.5;
+pragma solidity ^0.7.6;
 pragma abicoder v2;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -29,6 +29,7 @@ abstract contract AccountStorage is StandardToken {
         address account;
         address sponsor;
         uint256 tokensToMint;
+        uint256 selfBuy;
     }
 
 
@@ -41,7 +42,7 @@ abstract contract AccountStorage is StandardToken {
 
     event AccountCreation(address indexed account, address indexed sponsor);
     event AccountMigrationFinished();
-    event DirectBonus(address indexed account, address indexed fromAccount, uint256 amountOfEthereum);
+    event DirectBonusPaid(address indexed account, address indexed fromAccount, uint256 amountOfEthereum);
 
 
     modifier isRegistered(address account) {
@@ -70,9 +71,9 @@ abstract contract AccountStorage is StandardToken {
     }
 
 
-    function migrateAccount(address account, address sponsor, uint256 tokensToMint) public {
+    function migrateAccount(address account, address sponsor, uint256 tokensToMint, uint256 selfBuy) public {
         MigrationData[] memory data = new MigrationData[](1);
-        data[0] = MigrationData(account, sponsor, tokensToMint);
+        data[0] = MigrationData(account, sponsor, tokensToMint, selfBuy);
         migrateAccountsInBatch(data);
     }
 
@@ -85,6 +86,7 @@ abstract contract AccountStorage is StandardToken {
             address curAddress = data[i].account;
             address curSponsorAddress = data[i].sponsor;
             uint256 tokensToMint = data[i].tokensToMint;
+            uint256 selfBuy = data[i].selfBuy;
             if (curSponsorAddress == address(0)) {
                 curSponsorAddress = address(this);
             }
@@ -93,6 +95,7 @@ abstract contract AccountStorage is StandardToken {
 
             increaseTotalSupply(tokensToMint);
             increaseBalanceOf(curAddress, tokensToMint);
+            increaseSelfBuyOf(curAddress, selfBuy);
             emit AccountCreation(curAddress, curSponsorAddress);
         }
     }
@@ -199,7 +202,7 @@ abstract contract AccountStorage is StandardToken {
 
     function addDirectBonusTo(address account, uint256 amount) internal {
         _accountsData[account].directBonus = _accountsData[account].directBonus.add(amount);
-        emit DirectBonus(account, msg.sender, amount);
+        emit DirectBonusPaid(account, msg.sender, amount);
     }
 
 

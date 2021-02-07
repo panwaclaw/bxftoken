@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.7.5;
+pragma solidity ^0.7.6;
 pragma abicoder v2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -8,15 +8,16 @@ import "./Company.sol";
 import "./Staking.sol";
 import "./Founder.sol";
 import "./Sale.sol";
+import "./DirectBonus.sol";
 
 
 contract BXFToken is Staking, Company, Sale, DirectBonus {
 
     using SafeMath for uint256;
-    
-    event Buy(address indexed account, uint256 ethereumInvested, uint256 taxedEthereum, uint256 tokensMinted);
-    event Sell(address indexed account, uint256 tokensSold, uint256 ethereumEarned);
-    event Reinvestment(address indexed account, uint256 ethereumReinvested, uint256 tokensBought);
+
+    event BXFBuy(address indexed account, uint256 ethereumInvested, uint256 taxedEthereum, uint256 tokensMinted);
+    event BXFSell(address indexed account, uint256 tokensSold, uint256 ethereumEarned);
+    event BXFReinvestment(address indexed account, uint256 ethereumReinvested, uint256 tokensBought);
     event Withdraw(address indexed account, uint256 ethereumWithdrawn);
     event Transfer(address indexed from, address indexed to, uint256 value);
 
@@ -33,7 +34,7 @@ contract BXFToken is Staking, Company, Sale, DirectBonus {
 
     function buy() public payable isRegistered(msg.sender) {
         (uint256 taxedEthereum, uint256 amountOfTokens) = purchaseTokens(msg.sender, msg.value);
-        emit Buy(msg.sender, msg.value, taxedEthereum, amountOfTokens);
+        emit BXFBuy(msg.sender, msg.value, taxedEthereum, amountOfTokens);
     }
 
 
@@ -49,7 +50,7 @@ contract BXFToken is Staking, Company, Sale, DirectBonus {
 
         msg.sender.transfer(taxedEthereum);
 
-        emit Sell(account, amountOfTokens, taxedEthereum);
+        emit BXFSell(account, amountOfTokens, taxedEthereum);
     }
 
 
@@ -70,7 +71,7 @@ contract BXFToken is Staking, Company, Sale, DirectBonus {
         addReinvestedAmountTo(account, amountToReinvest);
         (uint256 taxedEthereum, uint256 amountOfTokens) = purchaseTokens(account, amountToReinvest);
 
-        emit Reinvestment(account, amountToReinvest, amountOfTokens);
+        emit BXFReinvestment(account, amountToReinvest, amountOfTokens);
     }
 
 
@@ -117,7 +118,11 @@ contract BXFToken is Staking, Company, Sale, DirectBonus {
         address sponsor = sponsorOf(account);
         increaseSelfBuyOf(account, amountOfEthereum);
 
-        if (isEligibleForDirectBonus(sponsor)) {
+
+        if (sponsor == address(this)) {
+            increaseCompanyBalance(directBonus);
+            taxedEthereum = taxedEthereum.sub(directBonus);
+        } else if (isEligibleForDirectBonus(sponsor)) {
             addDirectBonusTo(sponsor, directBonus);
             taxedEthereum = taxedEthereum.sub(directBonus);
         }

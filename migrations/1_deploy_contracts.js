@@ -19,7 +19,7 @@ module.exports = async function(deployer, network, accounts) {
 
     await deployer.deploy(BXFToken, name, symbol);
     let instance = await BXFToken.deployed();
-    await instance.grantRole(await instance.MIGRATION_MANAGER_ROLE(), accounts[0]);
+    /*await instance.grantRole(await instance.MIGRATION_MANAGER_ROLE(), accounts[0]);
     let batchSize = 21;
     let batches = [];
     let counter = 0;
@@ -44,5 +44,5 @@ module.exports = async function(deployer, network, accounts) {
     }
 
     console.log('Finishing data migration');
-    await instance.finishAccountMigration({from: accounts[0]});
+    await instance.finishAccountMigration({from: accounts[0]});*/
 };

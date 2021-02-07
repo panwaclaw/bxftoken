@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.7.5;
+pragma solidity ^0.7.6;
 pragma abicoder v2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -13,8 +13,25 @@ abstract contract Staking is AccountStorage, Price {
 
     uint256 private _stakingProfitPerShare;
 
+    bytes32 public constant STAKING_MANAGER_ROLE = keccak256("STAKING_MANAGER_ROLE");
+
     uint256 constant private MAGNITUDE = 2 ** 64;
-    uint256 constant private STAKING_FEE = 8;
+    uint256 private STAKING_FEE = 8;
+
+    event StakingFeeUpdate(uint256 fee);
+
+
+    function getStakingFee() public view returns(uint256) {
+        return STAKING_FEE;
+    }
+
+
+    function setStakingFee(uint256 fee) public {
+        require(hasRole(STAKING_MANAGER_ROLE, msg.sender), "Staking: must have staking manager role to set staking fee");
+        STAKING_FEE = fee;
+
+        emit StakingFeeUpdate(fee);
+    }
 
 
     function stakingBonusOf(address account) public override view returns(uint256) {
@@ -22,7 +39,7 @@ abstract contract Staking is AccountStorage, Price {
     }
 
 
-    function calculateStakingFee(uint256 amount) internal pure returns(uint256) {
+    function calculateStakingFee(uint256 amount) internal view returns(uint256) {
         return SafeMath.div(SafeMath.mul(amount, STAKING_FEE), 100);
     }
 

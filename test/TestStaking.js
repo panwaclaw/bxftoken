@@ -15,6 +15,8 @@ contract("BXFToken", accounts => {
         }
 
         let investedAmount = 90;
+        await instance.setStakingFee((0).toString(), {from: accounts[0]});
+
         for (let i = 0; i < accounts.length; i++) {
             console.log('Buy:', i + 1, '/', accounts.length)
             //console.log(web3.utils.fromWei((await instance.buyPrice.call()).toString(), "ether"), web3.utils.fromWei((await instance.sellPrice.call()).toString(), "ether"))
@@ -31,6 +33,7 @@ contract("BXFToken", accounts => {
             console.log('Sell:', i + 1, '/', accounts.length)
             //console.log(web3.utils.fromWei((await instance.buyPrice.call()).toString(), "ether"), web3.utils.fromWei((await instance.sellPrice.call()).toString(), "ether"))
             let result = await instance.sell((await instance.balanceOf.call(accounts[i])).toString(), {from: accounts[i]});
+            //await instance.setStakingFee((0).toString(), {from: accounts[0]});
             //console.log(result);
             for (let j = 0; j < accounts.length; j++) {
                 balances[j] = web3.utils.fromWei((await instance.balanceOf.call(accounts[j])).toString(), "ether");
@@ -43,7 +46,8 @@ contract("BXFToken", accounts => {
         //console.log(web3.utils.fromWei((await instance.buyPrice.call()).toString(), "ether"), web3.utils.fromWei((await instance.sellPrice.call()).toString(), "ether"))
         let returnedAmount = balances.reduce((a, b) => parseFloat(a) + parseFloat(b), 0);
         let r2 = distribution.reduce((a, b) => parseFloat(a) + parseFloat(b), 0);
-        console.log(web3.utils.fromWei((await web3.eth.getBalance(instance.address)).toString(), "ether"), returnedAmount, r2);
-        assert.ok(r2 < investedAmount * accounts.length * 0.16, "Staking works wrong");
+        let contractBalance = parseFloat(web3.utils.fromWei((await web3.eth.getBalance(instance.address)).toString(), "ether"));
+        console.log(contractBalance, returnedAmount, r2);
+        assert.ok(investedAmount * accounts.length * 0.51 + r2 <= contractBalance, "Staking works wrong");
     });
 })
