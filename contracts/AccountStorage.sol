@@ -38,11 +38,12 @@ abstract contract AccountStorage is StandardToken {
     EnumerableSet.AddressSet private _accounts;
     mapping (address => AccountData) private _accountsData;
 
-    bytes32 constant public MIGRATION_MANAGER_ROLE = keccak256("MIGRATION_MANAGER_ROLE");
+    bytes32 constant public ACCOUNT_MANAGER_ROLE = keccak256("ACCOUNT_MANAGER_ROLE");
 
     event AccountCreation(address indexed account, address indexed sponsor);
     event AccountMigrationFinished();
     event DirectBonusPaid(address indexed account, address indexed fromAccount, uint256 amountOfEthereum);
+    event AccountSponsorUpdated(address indexed account, address indexed oldSponsor, address indexed newSponsor);
 
 
     modifier isRegistered(address account) {
@@ -79,7 +80,7 @@ abstract contract AccountStorage is StandardToken {
 
 
     function migrateAccountsInBatch(MigrationData[] memory data) public {
-        require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
+        require(hasRole(ACCOUNT_MANAGER_ROLE, msg.sender), "AccountStorage: must have account manager role to migrate data");
         require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
 
         for (uint i = 0; i < data.length; i += 1) {
@@ -107,7 +108,7 @@ abstract contract AccountStorage is StandardToken {
 
 
     function finishAccountMigration() public {
-        require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
+        require(hasRole(ACCOUNT_MANAGER_ROLE, msg.sender), "AccountStorage: must have account manager role to migrate data");
         require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
 
         _accountsMigrated = true;
@@ -126,14 +127,20 @@ abstract contract AccountStorage is StandardToken {
         if (sponsor != address(this)) {
             require(_accounts.contains(sponsor), "AccountStorage: there's no such sponsor, consider joining with existing sponsor account or contract itself");
         }
-        if (!hasAccount(account)) {
-            addAccountData(account, sponsor);
-            _accounts.add(account);
 
-            emit AccountCreation(account, sponsor);
-            return true;
-        }
-        return false;
+        addAccountData(account, sponsor);
+        _accounts.add(account);
+
+        emit AccountCreation(account, sponsor);
+        return true;
+    }
+
+
+    function setSponsorFor(address account, address newSponsor) public {
+        require(hasRole(ACCOUNT_MANAGER_ROLE, msg.sender), "AccountStorage: must have account manager role to change sponsor for account");
+        address oldSponsor = _accountsData[account].sponsor;
+        _accountsData[account].sponsor = sponsor;
+        emit AccountSponsorUpdated(account, oldSponsor, newSponsor);
     }
 
 
