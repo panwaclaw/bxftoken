@@ -14,6 +14,7 @@ abstract contract Sale is Founder {
 
     event SaleStarted(uint atBlockNumber, uint atTimestamp);
 
+
     modifier canInvest(uint256 amount) {
         require(selfBuyOf(msg.sender) + amount <= getInvestmentCap() + founderBonusCapFor(msg.sender), "Sale: you can't invest more than current investment cap");
         _;
@@ -40,6 +41,7 @@ abstract contract Sale is Founder {
 
         emit SaleStarted(block.number, block.timestamp);
     }
+
 
     function moveSaleForwardBy(uint256 blocks) public {
         require(hasRole(SALE_MANAGER_ROLE, msg.sender), "Sale: must have sale manager role");

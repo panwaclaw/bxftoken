@@ -34,6 +34,8 @@ contract BXFToken is Staking, Company, Sale, DirectBonus {
 
     function buy() public payable isRegistered(msg.sender) {
         (uint256 taxedEthereum, uint256 amountOfTokens) = purchaseTokens(msg.sender, msg.value);
+
+        emit Transfer(address(0), msg.sender, amountOfTokens);
         emit BXFBuy(msg.sender, msg.value, taxedEthereum, amountOfTokens);
     }
 
@@ -50,6 +52,7 @@ contract BXFToken is Staking, Company, Sale, DirectBonus {
 
         msg.sender.transfer(taxedEthereum);
 
+        emit Transfer(account, address(0), amountOfTokens);
         emit BXFSell(account, amountOfTokens, taxedEthereum);
     }
 
@@ -71,6 +74,7 @@ contract BXFToken is Staking, Company, Sale, DirectBonus {
         addReinvestedAmountTo(account, amountToReinvest);
         (uint256 taxedEthereum, uint256 amountOfTokens) = purchaseTokens(account, amountToReinvest);
 
+        emit Transfer(address(0), account, amountOfTokens);
         emit BXFReinvestment(account, amountToReinvest, amountOfTokens);
     }
 
@@ -80,7 +84,9 @@ contract BXFToken is Staking, Company, Sale, DirectBonus {
         if (balanceOf(account) > 0) {
             sell(balanceOf(account));
         }
-        withdraw(totalBonusOf(account));
+        if (totalBonusOf(account) > 0) {
+            withdraw(totalBonusOf(account));
+        }
     }
 
 
@@ -99,6 +105,7 @@ contract BXFToken is Staking, Company, Sale, DirectBonus {
 
         processDistributionOnTransfer(sender, amount, recipient, taxedTokens);
 
+        emit Transfer(sender, address(0), stakingFee);
         emit Transfer(sender, recipient, taxedTokens);
         return true;
     }
