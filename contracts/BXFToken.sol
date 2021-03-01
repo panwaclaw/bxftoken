@@ -16,8 +16,8 @@ contract BXFToken is Staking, Company, Sale, DirectBonus {
     using SafeMath for uint256;
 
     event BXFBuy(address indexed account, uint256 ethereumInvested, uint256 taxedEthereum, uint256 tokensMinted);
-    event BXFSell(address indexed account, uint256 tokensSold, uint256 ethereumEarned);
-    event BXFReinvestment(address indexed account, uint256 ethereumReinvested, uint256 tokensBought);
+    event BXFSell(address indexed account, uint256 tokenBurned, uint256 ethereumGot);
+    event BXFReinvestment(address indexed account, uint256 ethereumReinvested, uint256 tokensMinted);
     event Withdraw(address indexed account, uint256 ethereumWithdrawn);
     event Transfer(address indexed from, address indexed to, uint256 value);
 

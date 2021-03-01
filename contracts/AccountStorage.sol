@@ -118,14 +118,12 @@ abstract contract AccountStorage is StandardToken {
 
     function createAccount(address sponsor) public returns(bool) {
         require(_accountsMigrated, "AccountStorage: account data isn't migrated yet, try later");
+        require(!hasAccount(msg.sender), "AccountStorage: account already exists");
 
         address account = msg.sender;
 
         if (sponsor == address(0)) {
             sponsor = address(this);
-        }
-        if (sponsor != address(this)) {
-            require(_accounts.contains(sponsor), "AccountStorage: there's no such sponsor, consider joining with existing sponsor account or contract itself");
         }
 
         addAccountData(account, sponsor);
@@ -139,7 +137,7 @@ abstract contract AccountStorage is StandardToken {
     function setSponsorFor(address account, address newSponsor) public {
         require(hasRole(ACCOUNT_MANAGER_ROLE, msg.sender), "AccountStorage: must have account manager role to change sponsor for account");
         address oldSponsor = _accountsData[account].sponsor;
-        _accountsData[account].sponsor = sponsor;
+        _accountsData[account].sponsor = newSponsor;
         emit AccountSponsorUpdated(account, oldSponsor, newSponsor);
     }
 
