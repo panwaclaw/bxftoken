@@ -23,6 +23,11 @@ abstract contract Founder is AccountStorage {
     }
 
 
+    function getFoundersCount() public view returns(uint256) {
+        return _founderAccounts.length();
+    }
+
+
     function setFounderInvestmentCapBonus(uint256 investmentCapBonus) public {
         require(hasRole(FOUNDER_MANAGER_ROLE, msg.sender), "Founder: must have founder manager role set investment cap bonus for founders");
         FOUNDER_INVESTMENT_CAP_BONUS = investmentCapBonus;

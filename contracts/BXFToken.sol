@@ -9,9 +9,10 @@ import "./Staking.sol";
 import "./Founder.sol";
 import "./Sale.sol";
 import "./DirectBonus.sol";
+import "./Emergency.sol";
 
 
-contract BXFToken is Staking, Company, Sale, DirectBonus {
+contract BXFToken is Staking, Company, Sale, DirectBonus, Emergency {
 
     using SafeMath for uint256;
 
