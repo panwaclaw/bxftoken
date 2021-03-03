@@ -58,7 +58,7 @@ abstract contract Founder is AccountStorage {
     }
 
 
-    function founderBonusCapFor(address account) internal view returns(uint256) {
+    function founderInvestmentBonusCapFor(address account) internal view returns(uint256) {
         return isFounder(account) ? getFounderInvestmentCapBonus() : 0;
     }
 }

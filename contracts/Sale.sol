@@ -16,7 +16,7 @@ abstract contract Sale is Founder {
 
 
     modifier canInvest(uint256 amount) {
-        require(selfBuyOf(msg.sender) + amount <= getInvestmentCap() + founderBonusCapFor(msg.sender), "Sale: you can't invest more than current investment cap");
+        require(selfBuyOf(msg.sender) + amount <= getInvestmentCap() + founderInvestmentBonusCapFor(msg.sender), "Sale: you can't invest more than current investment cap");
         _;
     }
 
