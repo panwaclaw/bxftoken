@@ -14,6 +14,7 @@ abstract contract Staking is AccountStorage, Price {
     uint256 private _stakingProfitPerShare;
 
     bytes32 public constant STAKING_MANAGER_ROLE = keccak256("STAKING_MANAGER_ROLE");
+    bytes32 public constant CRYPTOREWARD_MANAGER_ROLE = keccak256("CRYPTOREWARD_MANAGER_ROLE");
 
     uint256 constant private MAGNITUDE = 2 ** 64;
     uint256 private STAKING_FEE = 8;
@@ -31,6 +32,12 @@ abstract contract Staking is AccountStorage, Price {
         STAKING_FEE = fee;
 
         emit StakingFeeUpdate(fee);
+    }
+
+
+    function stakeCryptoReward() public payable {
+        require(hasRole(CRYPTOREWARD_MANAGER_ROLE, msg.sender), "Staking: must have CryptoReward manager role to stake bonuses");
+        increaseStakingProfitPerShare(msg.value);
     }
 
 
