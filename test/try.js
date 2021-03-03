@@ -1,5 +1,6 @@
 const helpers = require('./helpers');
 
+
 contract("BXFToken", accounts => {
   it("try test", async function() {
     let instance = await helpers.Deploy(accounts);

@@ -53,7 +53,7 @@ module.exports = {
       }
       assert.equal(iterAccount, contractAddress, "tree was built wrong");
     }
-
+ 
     return parents;
   },
 

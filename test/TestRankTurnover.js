@@ -55,6 +55,7 @@ contract("BXFToken", accounts => {
     }
 
     let transactions = await helpers.generateTransaction(accounts, config.TRANSACTION_AMOUNT , instance);
+
     for (let i = 0; i < transactions.length; i++) {
       let oldRanks = []
       for (let i = 0; i < accounts.length; i++){
