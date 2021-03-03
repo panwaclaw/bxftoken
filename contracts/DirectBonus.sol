@@ -11,7 +11,7 @@ abstract contract DirectBonus is AccountStorage {
 
     using SafeMath for uint256;
 
-    uint256 private DIRECT_FEE = 10;
+    uint256 private DIRECT_BONUS_FEE = 10;
     uint256 private MINIMUM_SELF_BUY_FOR_DIRECT_BONUS = 0.05 ether;
 
     bytes32 public constant DIRECT_BONUS_MANAGER_ROLE = keccak256("DIRECT_BONUS_MANAGER_ROLE");
@@ -20,14 +20,14 @@ abstract contract DirectBonus is AccountStorage {
     event DirectBonusFeeUpdate(uint256 fee);
 
 
-    function getDirectFee() public view returns(uint256) {
-        return DIRECT_FEE;
+    function getDirectBonusFee() public view returns(uint256) {
+        return DIRECT_BONUS_FEE;
     }
 
 
-    function setDirectFee(uint256 fee) public {
+    function setDirectBonusFee(uint256 fee) public {
         require(hasRole(DIRECT_BONUS_MANAGER_ROLE, msg.sender), "DirectBonus: must have direct bonus manager role to set direct bonus fee");
-        DIRECT_FEE = fee;
+        DIRECT_BONUS_FEE = fee;
 
         emit DirectBonusFeeUpdate(fee);
     }
@@ -47,7 +47,7 @@ abstract contract DirectBonus is AccountStorage {
 
 
     function calculateDirectBonus(uint256 amount) internal view returns(uint256) {
-        return SafeMath.div(SafeMath.mul(amount, DIRECT_FEE), 100);
+        return SafeMath.div(SafeMath.mul(amount, DIRECT_BONUS_FEE), 100);
     }
 
 
