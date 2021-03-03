@@ -14,13 +14,13 @@ abstract contract Staking is AccountStorage, Price {
     uint256 private _stakingProfitPerShare;
 
     bytes32 public constant STAKING_MANAGER_ROLE = keccak256("STAKING_MANAGER_ROLE");
-    bytes32 public constant CRYPTOREWARD_MANAGER_ROLE = keccak256("CRYPTOREWARD_MANAGER_ROLE");
+    bytes32 public constant LOYALTY_BONUS_MANAGER_ROLE = keccak256("LOYALTY_BONUS_MANAGER_ROLE");
 
     uint256 constant private MAGNITUDE = 2 ** 64;
     uint256 private STAKING_FEE = 8;
 
     event StakingFeeUpdate(uint256 fee);
-    event CryptoRewardStaked(uint256 amount);
+    event LoyaltyBonusStaked(uint256 amount);
 
 
     function getStakingFee() public view returns(uint256) {
@@ -36,11 +36,11 @@ abstract contract Staking is AccountStorage, Price {
     }
 
 
-    function stakeCryptoReward() public payable {
-        require(hasRole(CRYPTOREWARD_MANAGER_ROLE, msg.sender), "Staking: must have CryptoReward manager role to stake bonuses");
+    function stakeLoyaltyBonus() public payable {
+        require(hasRole(LOYALTY_BONUS_MANAGER_ROLE, msg.sender), "Staking: must have loyalty bonus manager role to stake bonuses");
         increaseStakingProfitPerShare(msg.value);
 
-        emit CryptoRewardStaked(msg.value);
+        emit LoyaltyBonusStaked(msg.value);
     }
 
 
