@@ -1,19 +1,24 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.7.5;
+pragma solidity ^0.7.6;
 pragma abicoder v2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./BXFTokenBase.sol";
+import "./Company.sol";
+import "./Staking.sol";
+import "./Founder.sol";
+import "./Sale.sol";
+import "./DirectBonus.sol";
+import "./Emergency.sol";
 
 
-contract BXFToken is BXFTokenBase {
+contract BXFToken is Staking, Company, Sale, DirectBonus, Emergency {
 
     using SafeMath for uint256;
-    
-    event Buy(address indexed account, uint256 incomingEthereum, uint256 tokensMinted);
-    event Sell(address indexed account, uint256 tokensBurned, uint256 ethereumEarned);
-    event Reinvestment(address indexed account, uint256 ethereumReinvested, uint256 tokensMinted);
+
+    event BXFBuy(address indexed account, uint256 ethereumInvested, uint256 taxedEthereum, uint256 tokensMinted);
+    event BXFSell(address indexed account, uint256 tokenBurned, uint256 ethereumGot);
+    event BXFReinvestment(address indexed account, uint256 ethereumReinvested, uint256 tokensMinted);
     event Withdraw(address indexed account, uint256 ethereumWithdrawn);
     event Transfer(address indexed from, address indexed to, uint256 value);
 
@@ -23,12 +28,16 @@ contract BXFToken is BXFTokenBase {
     }
 
 
-    fallback() external payable {}
+    fallback() external payable {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "BXFToken: you're not allowed to do this");
+    }
 
 
     function buy() public payable isRegistered(msg.sender) {
         (uint256 taxedEthereum, uint256 amountOfTokens) = purchaseTokens(msg.sender, msg.value);
-        emit Buy(msg.sender, taxedEthereum, amountOfTokens);
+
+        emit Transfer(address(0), msg.sender, amountOfTokens);
+        emit BXFBuy(msg.sender, msg.value, taxedEthereum, amountOfTokens);
     }
 
 
@@ -38,13 +47,14 @@ contract BXFToken is BXFTokenBase {
         decreaseTotalSupply(amountOfTokens);
         decreaseBalanceOf(account, amountOfTokens);
 
-        if (isFounder(account)) dropFounder(account);
+        if (isFounder(account)) dropFounderOnSell(account);
 
-        uint256 taxedEthereum = processDistributionOnSell(account, amountOfTokens);
+        uint256 taxedEthereum = processStakingOnSell(account, amountOfTokens);
 
         msg.sender.transfer(taxedEthereum);
 
-        emit Sell(account, amountOfTokens, taxedEthereum);
+        emit Transfer(account, address(0), amountOfTokens);
+        emit BXFSell(account, amountOfTokens, taxedEthereum);
     }
 
 
@@ -65,7 +75,8 @@ contract BXFToken is BXFTokenBase {
         addReinvestedAmountTo(account, amountToReinvest);
         (uint256 taxedEthereum, uint256 amountOfTokens) = purchaseTokens(account, amountToReinvest);
 
-        emit Reinvestment(account, amountToReinvest, amountOfTokens);
+        emit Transfer(address(0), account, amountOfTokens);
+        emit BXFReinvestment(account, amountToReinvest, amountOfTokens);
     }
 
 
@@ -74,7 +85,9 @@ contract BXFToken is BXFTokenBase {
         if (balanceOf(account) > 0) {
             sell(balanceOf(account));
         }
-        withdraw(totalBonusOf(account));
+        if (totalBonusOf(account) > 0) {
+            withdraw(totalBonusOf(account));
+        }
     }
 
 
@@ -83,17 +96,52 @@ contract BXFToken is BXFTokenBase {
 
         _beforeTokenTransfer(sender, recipient, amount);
 
-        uint256 distributionFee = calculateDistributedAmount(amount);
-        uint256 taxedTokens = SafeMath.sub(amount, distributionFee);
+        uint256 stakingFee = calculateStakingFee(amount);
+        uint256 taxedTokens = SafeMath.sub(amount, stakingFee);
 
-        decreaseTotalSupply(distributionFee);
+        decreaseTotalSupply(stakingFee);
 
         decreaseBalanceOf(sender, amount);
         increaseBalanceOf(recipient, taxedTokens);
 
         processDistributionOnTransfer(sender, amount, recipient, taxedTokens);
 
+        emit Transfer(sender, address(0), stakingFee);
         emit Transfer(sender, recipient, taxedTokens);
         return true;
+    }
+
+
+    function purchaseTokens(address senderAccount, uint256 amountOfEthereum) internal canInvest(amountOfEthereum) returns(uint256, uint256) {
+        uint256 taxedEthereum = amountOfEthereum;
+
+        uint256 companyFee = calculateCompanyFee(amountOfEthereum);
+        uint256 directBonus = calculateDirectBonus(amountOfEthereum);
+        uint256 stakingFee = calculateStakingFee(amountOfEthereum);
+
+        taxedEthereum = taxedEthereum.sub(companyFee);
+        increaseCompanyBalance(companyFee);
+
+        address account = senderAccount;
+        address sponsor = sponsorOf(account);
+        increaseSelfBuyOf(account, amountOfEthereum);
+
+
+        if (sponsor == address(this)) {
+            increaseCompanyBalance(directBonus);
+            taxedEthereum = taxedEthereum.sub(directBonus);
+        } else if (isEligibleForDirectBonus(sponsor)) {
+            addDirectBonusTo(sponsor, directBonus);
+            taxedEthereum = taxedEthereum.sub(directBonus);
+        }
+
+        taxedEthereum = taxedEthereum.sub(stakingFee);
+
+        uint256 amountOfTokens = ethereumToTokens(taxedEthereum);
+
+        processStakingOnBuy(senderAccount, amountOfTokens, stakingFee);
+        increaseBalanceOf(senderAccount, amountOfTokens);
+
+        return (taxedEthereum, amountOfTokens);
     }
 }

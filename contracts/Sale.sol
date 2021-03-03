@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.7.5;
+pragma solidity ^0.7.6;
 pragma abicoder v2;
 
 import "./Founder.sol";
@@ -14,8 +14,9 @@ abstract contract Sale is Founder {
 
     event SaleStarted(uint atBlockNumber, uint atTimestamp);
 
+
     modifier canInvest(uint256 amount) {
-        require(selfBuyOf(msg.sender) + amount <= getInvestmentCap() * 900 + founderBonusCapFor(msg.sender), "Sale: you can't invest more than current investment cap");
+        require(selfBuyOf(msg.sender) + amount <= getInvestmentCap() + founderInvestmentBonusCapFor(msg.sender), "Sale: you can't invest more than current investment cap");
         _;
     }
 
@@ -40,6 +41,7 @@ abstract contract Sale is Founder {
 
         emit SaleStarted(block.number, block.timestamp);
     }
+
 
     function moveSaleForwardBy(uint256 blocks) public {
         require(hasRole(SALE_MANAGER_ROLE, msg.sender), "Sale: must have sale manager role");

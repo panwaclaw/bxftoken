@@ -13,6 +13,9 @@ module.exports = {
     await instance.grantRole(await instance.MIGRATION_MANAGER_ROLE(), accounts[0]);
     await instance.grantRole(await instance.SALE_MANAGER_ROLE(), accounts[0]);
     await instance.grantRole(await instance.FOUNDER_MANAGER_ROLE(), accounts[0]);
+    await instance.grantRole(await instance.STAKING_MANAGER_ROLE(), accounts[0]);
+    await instance.grantRole(await instance.DIRECT_BONUS_MANAGER_ROLE(), accounts[0]);
+    await instance.grantRole(await instance.COMPANY_MANAGER_ROLE(), accounts[0]);
     await instance.finishAccountMigration({from: accounts[0]});
     return instance;
   },

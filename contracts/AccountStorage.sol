@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.7.5;
+pragma solidity ^0.7.6;
 pragma abicoder v2;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -18,18 +18,10 @@ abstract contract AccountStorage is StandardToken {
         address sponsor;
         uint256 balance;
         uint256 selfBuy;
-        uint rank;
-        uint256 turnover;
-        uint256 maxChildTurnover;
         uint256 directBonus;
-        uint256 indirectBonus;
-        uint256 founderBonus;
-        uint256 cryptoRewardBonus;
         uint256 reinvestedAmount;
         uint256 withdrawnAmount;
-        int256 distributionBonus;
-        uint256 directPartnersCount;
-        uint256 indirectPartnersCount;
+        int256 stakingValue;
     }
 
 
@@ -37,6 +29,7 @@ abstract contract AccountStorage is StandardToken {
         address account;
         address sponsor;
         uint256 tokensToMint;
+        uint256 selfBuy;
     }
 
 
@@ -45,13 +38,12 @@ abstract contract AccountStorage is StandardToken {
     EnumerableSet.AddressSet private _accounts;
     mapping (address => AccountData) private _accountsData;
 
-    bytes32 public constant MIGRATION_MANAGER_ROLE = keccak256("MIGRATION_MANAGER_ROLE");
+    bytes32 constant public ACCOUNT_MANAGER_ROLE = keccak256("ACCOUNT_MANAGER_ROLE");
 
     event AccountCreation(address indexed account, address indexed sponsor);
     event AccountMigrationFinished();
-    event FounderBonus(address indexed account, address indexed fromAccount, uint256 amountOfEthereum);
-    event DirectBonus(address indexed account, address indexed fromAccount, uint256 amountOfEthereum);
-    event IndirectBonus(address indexed account, address indexed fromAccount, uint256 amountOfEthereum);
+    event DirectBonusPaid(address indexed account, address indexed fromAccount, uint256 amountOfEthereum);
+    event AccountSponsorUpdated(address indexed account, address indexed oldSponsor, address indexed newSponsor);
 
 
     modifier isRegistered(address account) {
@@ -80,32 +72,31 @@ abstract contract AccountStorage is StandardToken {
     }
 
 
-    function migrateAccount(address account, address sponsor, uint256 tokensToMint) public {
+    function migrateAccount(address account, address sponsor, uint256 tokensToMint, uint256 selfBuy) public {
         MigrationData[] memory data = new MigrationData[](1);
-        data[0] = MigrationData(account, sponsor, tokensToMint);
+        data[0] = MigrationData(account, sponsor, tokensToMint, selfBuy);
         migrateAccountsInBatch(data);
     }
 
 
     function migrateAccountsInBatch(MigrationData[] memory data) public {
-        require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
-        require(data.length % 3 == 0, "AccountStorage: you must pass addesses in tuples of 3 elements");
+        require(hasRole(ACCOUNT_MANAGER_ROLE, msg.sender), "AccountStorage: must have account manager role to migrate data");
         require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
 
         for (uint i = 0; i < data.length; i += 1) {
             address curAddress = data[i].account;
             address curSponsorAddress = data[i].sponsor;
             uint256 tokensToMint = data[i].tokensToMint;
+            uint256 selfBuy = data[i].selfBuy;
             if (curSponsorAddress == address(0)) {
                 curSponsorAddress = address(this);
             }
             addAccountData(curAddress, curSponsorAddress);
             _accounts.add(curAddress);
 
-            _accountsData[curSponsorAddress].directPartnersCount += 1;
-
             increaseTotalSupply(tokensToMint);
             increaseBalanceOf(curAddress, tokensToMint);
+            increaseSelfBuyOf(curAddress, selfBuy);
             emit AccountCreation(curAddress, curSponsorAddress);
         }
     }
@@ -117,16 +108,8 @@ abstract contract AccountStorage is StandardToken {
 
 
     function finishAccountMigration() public {
-        require(hasRole(MIGRATION_MANAGER_ROLE, msg.sender), "AccountStorage: must have migration manager role to migrate data");
+        require(hasRole(ACCOUNT_MANAGER_ROLE, msg.sender), "AccountStorage: must have account manager role to migrate data");
         require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
-
-        for (uint i = 0; i < _accounts.length(); i++) {
-            address curAccount = sponsorOf(sponsorOf(_accounts.at(i)));
-            while (curAccount != address(0)) {
-                _accountsData[curAccount].indirectPartnersCount += 1;
-                curAccount = sponsorOf(curAccount);
-            }
-        }
 
         _accountsMigrated = true;
         emit AccountMigrationFinished();
@@ -135,29 +118,27 @@ abstract contract AccountStorage is StandardToken {
 
     function createAccount(address sponsor) public returns(bool) {
         require(_accountsMigrated, "AccountStorage: account data isn't migrated yet, try later");
+        require(!hasAccount(msg.sender), "AccountStorage: account already exists");
 
         address account = msg.sender;
 
         if (sponsor == address(0)) {
             sponsor = address(this);
         }
-        if (sponsor != address(this)) {
-            require(_accounts.contains(sponsor), "AccountStorage: there's no such sponsor, consider joining with existing sponsor account or contract itself");
-        }
-        if (!hasAccount(account)) {
-            addAccountData(account, sponsor);
-            _accounts.add(account);
 
-            address iterAccount = sponsorOf(sponsorOf(account));
-            while (iterAccount != address(0)) {
-                _accountsData[iterAccount].indirectPartnersCount += 1;
-                iterAccount = sponsorOf(iterAccount);
-            }
+        addAccountData(account, sponsor);
+        _accounts.add(account);
 
-            emit AccountCreation(account, sponsor);
-            return true;
-        }
-        return false;
+        emit AccountCreation(account, sponsor);
+        return true;
+    }
+
+
+    function setSponsorFor(address account, address newSponsor) public {
+        require(hasRole(ACCOUNT_MANAGER_ROLE, msg.sender), "AccountStorage: must have account manager role to change sponsor for account");
+        address oldSponsor = _accountsData[account].sponsor;
+        _accountsData[account].sponsor = newSponsor;
+        emit AccountSponsorUpdated(account, oldSponsor, newSponsor);
     }
 
 
@@ -171,16 +152,6 @@ abstract contract AccountStorage is StandardToken {
     }
 
 
-    function directPartnersCountOf(address account) public view returns(uint256) {
-        return _accountsData[account].directPartnersCount;
-    }
-
-
-    function indirectPartnersCountOf(address account) public view returns(uint256) {
-        return _accountsData[account].indirectPartnersCount;
-    }
-
-
     function sponsorOf(address account) public view returns(address) {
         return _accountsData[account].sponsor;
     }
@@ -188,16 +159,6 @@ abstract contract AccountStorage is StandardToken {
 
     function selfBuyOf(address account) public view returns(uint256) {
         return _accountsData[account].selfBuy;
-    }
-
-
-    function turnoverOf(address account) public view returns(uint256) {
-        return _accountsData[account].turnover;
-    }
-
-
-    function rankOf(address account) public view returns(uint) {
-        return _accountsData[account].rank;
     }
 
 
@@ -211,21 +172,6 @@ abstract contract AccountStorage is StandardToken {
     }
 
 
-    function indirectBonusOf(address account) public view returns(uint256) {
-        return _accountsData[account].indirectBonus;
-    }
-
-
-    function founderBonusOf(address account) public view returns(uint256) {
-        return _accountsData[account].founderBonus;
-    }
-
-
-    function cryptoRewardBonusOf(address account) public view returns(uint256) {
-        return _accountsData[account].cryptoRewardBonus;
-    }
-
-
     function withdrawnAmountOf(address account) public view returns(uint256) {
         return _accountsData[account].withdrawnAmount;
     }
@@ -236,22 +182,16 @@ abstract contract AccountStorage is StandardToken {
     }
 
 
-    function distributionBonusOf(address account) public virtual view returns(uint256);
+    function stakingBonusOf(address account) public virtual view returns(uint256);
 
 
     function totalBonusOf(address account) public view returns(uint256) {
-        return directBonusOf(account) + indirectBonusOf(account) + founderBonusOf(account) + cryptoRewardBonusOf(account)
-            + distributionBonusOf(account) - withdrawnAmountOf(account) - reinvestedAmountOf(account);
+        return directBonusOf(account) + stakingBonusOf(account) - withdrawnAmountOf(account) - reinvestedAmountOf(account);
     }
 
 
     function increaseSelfBuyOf(address account, uint256 amount) internal {
         _accountsData[account].selfBuy =_accountsData[account].selfBuy.add(amount);
-    }
-
-
-    function increaseTurnoverOf(address account, uint256 amount) internal {
-        _accountsData[account].turnover = _accountsData[account].turnover.add(amount);
     }
 
 
@@ -267,24 +207,7 @@ abstract contract AccountStorage is StandardToken {
 
     function addDirectBonusTo(address account, uint256 amount) internal {
         _accountsData[account].directBonus = _accountsData[account].directBonus.add(amount);
-        emit DirectBonus(account, msg.sender, amount);
-    }
-
-
-    function addIndirectBonusTo(address account, uint256 amount) internal {
-        _accountsData[account].indirectBonus = _accountsData[account].indirectBonus.add(amount);
-        emit IndirectBonus(account, msg.sender, amount);
-    }
-
-
-    function addFounderBonusTo(address account, uint256 amount) internal {
-        _accountsData[account].founderBonus = _accountsData[account].founderBonus.add(amount);
-        emit FounderBonus(account, msg.sender, amount);
-    }
-
-
-    function addCryptoRewardBonusTo(address account, uint256 amount) internal {
-        _accountsData[account].cryptoRewardBonus = _accountsData[account].cryptoRewardBonus.add(amount);
+        emit DirectBonusPaid(account, msg.sender, amount);
     }
 
 
@@ -298,52 +221,30 @@ abstract contract AccountStorage is StandardToken {
     }
 
 
-    function getDistributionBonusValueOf(address account) internal view returns(int256) {
-        return _accountsData[account].distributionBonus;
+    function stakingValueOf(address account) internal view returns(int256) {
+        return _accountsData[account].stakingValue;
     }
 
 
-    function increaseDistributionBonusValueFor(address account, int256 amount) internal {
-        _accountsData[account].distributionBonus += amount;
+    function increaseStakingValueFor(address account, int256 amount) internal {
+        _accountsData[account].stakingValue += amount;
     }
 
 
-    function decreaseDistributionBonusValueFor(address account, int256 amount) internal {
-        _accountsData[account].distributionBonus -= amount;
+    function decreaseStakingValueFor(address account, int256 amount) internal {
+        _accountsData[account].stakingValue -= amount;
     }
 
-
-    function maxChildTurnoverOf(address account) internal view returns(uint256) {
-        return _accountsData[account].maxChildTurnover;
-    }
-
-
-    function setMaxChildTurnoverFor(address account, uint256 amount) internal {
-        _accountsData[account].maxChildTurnover = amount;
-    }
-
-
-    function setRankFor(address account, uint256 rank) internal {
-        _accountsData[account].rank = rank;
-    }
 
     function addAccountData(address account, address sponsor) private {
         AccountData memory accountData = AccountData({
             sponsor: sponsor,
             balance: 0,
-            rank: 0,
             selfBuy: 0,
-            turnover: 0,
-            maxChildTurnover: 0,
             directBonus: 0,
-            indirectBonus: 0,
-            founderBonus: 0,
-            cryptoRewardBonus: 0,
             reinvestedAmount: 0,
             withdrawnAmount: 0,
-            distributionBonus: 0,
-            directPartnersCount: 0,
-            indirectPartnersCount: 0
+            stakingValue: 0
         });
         _accountsData[account] = accountData;
     }
