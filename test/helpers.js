@@ -10,7 +10,8 @@ module.exports = {
 
   Deploy: async function Deploy(accounts) {
     let instance = await BXFToken.deployed();
-    await instance.grantRole(await instance.MIGRATION_MANAGER_ROLE(), accounts[0]);
+
+    await instance.grantRole(await instance.ACCOUNT_MANAGER_ROLE(), accounts[0]);
     await instance.grantRole(await instance.SALE_MANAGER_ROLE(), accounts[0]);
     await instance.grantRole(await instance.FOUNDER_MANAGER_ROLE(), accounts[0]);
     await instance.grantRole(await instance.STAKING_MANAGER_ROLE(), accounts[0]);
