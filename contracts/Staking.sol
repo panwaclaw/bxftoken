@@ -20,6 +20,7 @@ abstract contract Staking is AccountStorage, Price {
     uint256 private STAKING_FEE = 8;
 
     event StakingFeeUpdate(uint256 fee);
+    event CryptoRewardPaid(uint256 amount);
 
 
     function getStakingFee() public view returns(uint256) {
@@ -38,6 +39,8 @@ abstract contract Staking is AccountStorage, Price {
     function stakeCryptoReward() public payable {
         require(hasRole(CRYPTOREWARD_MANAGER_ROLE, msg.sender), "Staking: must have CryptoReward manager role to stake bonuses");
         increaseStakingProfitPerShare(msg.value);
+
+        emit CryptoRewardPaid(msg.value);
     }
 
 
