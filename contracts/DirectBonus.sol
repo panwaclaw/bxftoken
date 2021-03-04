@@ -12,7 +12,7 @@ abstract contract DirectBonus is AccountStorage {
     using SafeMath for uint256;
 
     uint256 private DIRECT_BONUS_FEE = 10;
-    uint256 private MINIMUM_SELF_BUY_FOR_DIRECT_BONUS = 0.05 ether;
+    uint256 private MINIMUM_SELF_BUY_FOR_DIRECT_BONUS = 0.001 ether;
 
     bytes32 public constant DIRECT_BONUS_MANAGER_ROLE = keccak256("DIRECT_BONUS_MANAGER_ROLE");
 

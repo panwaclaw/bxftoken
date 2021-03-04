@@ -13,6 +13,7 @@ abstract contract Sale is Founder {
     bytes32 public constant SALE_MANAGER_ROLE = keccak256("SALE_MANAGER_ROLE");
 
     event SaleStarted(uint atBlockNumber, uint atTimestamp);
+    event NewSaleStartBlock(uint atBlockNumber, uint atTimestamp);
 
 
     modifier canInvest(uint256 amount) {
@@ -46,7 +47,9 @@ abstract contract Sale is Founder {
     function moveSaleForwardBy(uint256 blocks) public {
         require(hasRole(SALE_MANAGER_ROLE, msg.sender), "Sale: must have sale manager role");
         require(_saleStartBlockNumber > 0, "Sale: sale forward move method is not available yet, start sale first");
+        require(blocks < _saleStartBlockNumber, "Sale: you can't move sale start from zero block");
 
         _saleStartBlockNumber = _saleStartBlockNumber.sub(blocks);
+        emit NewSaleStartBlock(_saleStartBlockNumber, block.timestamp);
     }
 }
