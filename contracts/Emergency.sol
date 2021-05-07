@@ -18,6 +18,7 @@ abstract contract Emergency is Founder {
     bool private _emergencyVotingStarted = false;
 
     event EmergencyVotingStarted();
+    event EmergencyVotingCancelled();
     event EmergencyWithdraw(address account, uint256 amount);
 
 
@@ -66,5 +67,14 @@ abstract contract Emergency is Founder {
         _emergencyThresholdCount = thresholdCount;
 
         emit EmergencyVotingStarted();
+    }
+
+    function cancelEmergencyVote() public {
+        require(hasRole(EMERGENCY_MANAGER_ROLE, msg.sender), "Emergency: you're not allowed to start emergency vote");
+
+        _emergencyVotingStarted = false;
+        _emergencyThresholdCount = 0;
+
+        emit EmergencyVotingCancelled();
     }
 }

@@ -16,12 +16,10 @@ contract BXFToken is Staking, Company, Sale, DirectBonus, Emergency {
 
     using SafeMath for uint256;
 
-    event BXFBuy(address indexed account, uint256 ethereumInvested, uint256 taxedEthereum, uint256 tokensMinted);
-    event BXFSell(address indexed account, uint256 tokenBurned, uint256 ethereumGot);
-    event BXFReinvestment(address indexed account, uint256 ethereumReinvested, uint256 tokensMinted);
+    event Mint(address indexed account, uint256 ethereumInvested, uint256 taxedEthereum, uint256 tokensMinted);
+    event Burn(address indexed account, uint256 tokenBurned, uint256 ethereumGot);
+    event BonusMint(address indexed account, uint256 ethereumReinvested, uint256 tokensMinted);
     event Withdraw(address indexed account, uint256 ethereumWithdrawn);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
 
     constructor(string memory name, string memory symbol) StandardToken(name, symbol) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -33,15 +31,15 @@ contract BXFToken is Staking, Company, Sale, DirectBonus, Emergency {
     }
 
 
-    function buy() public payable isRegistered(msg.sender) {
+    function mint() public payable isRegistered(msg.sender) {
         (uint256 taxedEthereum, uint256 amountOfTokens) = purchaseTokens(msg.sender, msg.value);
 
         emit Transfer(address(0), msg.sender, amountOfTokens);
-        emit BXFBuy(msg.sender, msg.value, taxedEthereum, amountOfTokens);
+        emit Mint(msg.sender, msg.value, taxedEthereum, amountOfTokens);
     }
 
 
-    function sell(uint256 amountOfTokens) public isRegistered(msg.sender) hasEnoughBalance(amountOfTokens) {
+    function burn(uint256 amountOfTokens) public isRegistered(msg.sender) hasEnoughBalance(amountOfTokens) {
         address account = msg.sender;
 
         decreaseTotalSupply(amountOfTokens);
@@ -54,7 +52,7 @@ contract BXFToken is Staking, Company, Sale, DirectBonus, Emergency {
         msg.sender.transfer(taxedEthereum);
 
         emit Transfer(account, address(0), amountOfTokens);
-        emit BXFSell(account, amountOfTokens, taxedEthereum);
+        emit Burn(account, amountOfTokens, taxedEthereum);
     }
 
 
@@ -69,21 +67,21 @@ contract BXFToken is Staking, Company, Sale, DirectBonus, Emergency {
     }
 
 
-    function reinvest(uint256 amountToReinvest) public isRegistered(msg.sender) hasEnoughAvailableEther(amountToReinvest) {
+    function bonusMint(uint256 amountToMint) public isRegistered(msg.sender) hasEnoughAvailableEther(amountToMint) {
         address account = msg.sender;
 
-        addReinvestedAmountTo(account, amountToReinvest);
-        (uint256 taxedEthereum, uint256 amountOfTokens) = purchaseTokens(account, amountToReinvest);
+        addReinvestedAmountTo(account, amountToMint);
+        (uint256 taxedEthereum, uint256 amountOfTokens) = purchaseTokens(account, amountToMint);
 
         emit Transfer(address(0), account, amountOfTokens);
-        emit BXFReinvestment(account, amountToReinvest, amountOfTokens);
+        emit BonusMint(account, amountToMint, amountOfTokens);
     }
 
 
     function exit() public isRegistered(msg.sender) {
         address account = msg.sender;
         if (balanceOf(account) > 0) {
-            sell(balanceOf(account));
+            burn(balanceOf(account));
         }
         if (totalBonusOf(account) > 0) {
             withdraw(totalBonusOf(account));
@@ -96,18 +94,12 @@ contract BXFToken is Staking, Company, Sale, DirectBonus, Emergency {
 
         _beforeTokenTransfer(sender, recipient, amount);
 
-        uint256 stakingFee = calculateStakingFee(amount);
-        uint256 taxedTokens = SafeMath.sub(amount, stakingFee);
-
-        decreaseTotalSupply(stakingFee);
-
         decreaseBalanceOf(sender, amount);
-        increaseBalanceOf(recipient, taxedTokens);
+        increaseBalanceOf(recipient, amount);
 
-        processDistributionOnTransfer(sender, amount, recipient, taxedTokens);
+        processStakingUpdateOnTransfer(sender, recipient, amount);
 
-        emit Transfer(sender, address(0), stakingFee);
-        emit Transfer(sender, recipient, taxedTokens);
+        emit Transfer(sender, recipient, amount);
         return true;
     }
 

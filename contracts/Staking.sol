@@ -90,13 +90,9 @@ abstract contract Staking is AccountStorage, Price {
     }
 
 
-    function processDistributionOnTransfer(address sender, uint256 amountOfTokens, address recipient, uint256 taxedTokens) internal {
-        uint256 stakedBonus = tokensToEthereum(SafeMath.sub(amountOfTokens, taxedTokens));
-
+    function processStakingUpdateOnTransfer(address sender, address recipient, uint256 amountOfTokens) internal {
         decreaseStakingValueFor(sender, (int256) (_stakingProfitPerShare * amountOfTokens));
-        increaseStakingValueFor(recipient, (int256) (_stakingProfitPerShare * taxedTokens));
-
-        increaseStakingProfitPerShare(stakedBonus);
+        increaseStakingValueFor(recipient, (int256) (_stakingProfitPerShare * amountOfTokens));
     }
 
 }

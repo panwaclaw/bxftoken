@@ -13,13 +13,18 @@ contract("BXFToken", accounts => {
         for (let i = 0; i < accounts.length; i++) {
             await instance.createAccount("0x0000000000000000000000000000000000000000", {from: accounts[i]});
         }
-
-        let investedAmount = 90;
         await instance.setStakingFee((0).toString(), {from: accounts[0]});
 
+        let totalInvested = 0;
+
         for (let i = 0; i < accounts.length; i++) {
-            console.log('Buy:', i + 1, '/', accounts.length)
-            //console.log(web3.utils.fromWei((await instance.buyPrice.call()).toString(), "ether"), web3.utils.fromWei((await instance.sellPrice.call()).toString(), "ether"))
+            let investedAmount = helpers.getRandomInt(1, 50);
+            totalInvested += investedAmount;
+            console.log('Buy:', i + 1, '/', accounts.length, 'Investing:', investedAmount, 'ETH');
+            let st_fee = helpers.getRandomInt(1, 20);
+            //console.log('New Staking Fee', st_fee)
+            //await instance.setStakingFee((st_fee).toString(), {from: accounts[0]});
+
             await instance.buy({from: accounts[i], value: web3.utils.toWei(investedAmount.toString(), "ether")});
             for (let j = 0; j < accounts.length; j++) {
                 balances[j] = web3.utils.fromWei((await instance.balanceOf.call(accounts[j])).toString(), "ether");
@@ -29,11 +34,12 @@ contract("BXFToken", accounts => {
             console.log(distribution);
         }
 
-        for (let i = 0; i < accounts.length; i++) {
+        for (let i = accounts.length - 1; i >= 0; i--) {
             console.log('Sell:', i + 1, '/', accounts.length)
-            //console.log(web3.utils.fromWei((await instance.buyPrice.call()).toString(), "ether"), web3.utils.fromWei((await instance.sellPrice.call()).toString(), "ether"))
             let result = await instance.sell((await instance.balanceOf.call(accounts[i])).toString(), {from: accounts[i]});
-            //await instance.setStakingFee((0).toString(), {from: accounts[0]});
+            let st_fee = helpers.getRandomInt(1, 20);
+            //console.log('New Staking Fee', st_fee)
+            //await instance.setStakingFee((st_fee).toString(), {from: accounts[0]});
             //console.log(result);
             for (let j = 0; j < accounts.length; j++) {
                 balances[j] = web3.utils.fromWei((await instance.balanceOf.call(accounts[j])).toString(), "ether");
@@ -47,7 +53,10 @@ contract("BXFToken", accounts => {
         let returnedAmount = balances.reduce((a, b) => parseFloat(a) + parseFloat(b), 0);
         let r2 = distribution.reduce((a, b) => parseFloat(a) + parseFloat(b), 0);
         let contractBalance = parseFloat(web3.utils.fromWei((await web3.eth.getBalance(instance.address)).toString(), "ether"));
-        console.log(contractBalance, returnedAmount, r2);
-        assert.ok(investedAmount * accounts.length * 0.51 + r2 <= contractBalance, "Staking works wrong");
-    });
+        console.log(contractBalance, totalInvested, r2);
+        let companyBalance = parseFloat(web3.utils.fromWei((await instance.companyBalance()).toString(), 'ether'));
+
+        console.log(contractBalance - r2, companyBalance);
+        assert.ok(contractBalance - r2 >= companyBalance, "Staking works wrong");
+    }).timeout(36000000);
 })

@@ -94,13 +94,34 @@ abstract contract AccountStorage is StandardToken {
             addAccountData(curAddress, curSponsorAddress);
             _accounts.add(curAddress);
 
-            increaseTotalSupply(tokensToMint);
-            increaseBalanceOf(curAddress, tokensToMint);
-            increaseSelfBuyOf(curAddress, selfBuy);
+            //increaseTotalSupply(tokensToMint);
+            //increaseBalanceOf(curAddress, tokensToMint);
+            //increaseSelfBuyOf(curAddress, selfBuy);
+            _accountsData[curAddress].selfBuy = selfBuy;
+            _accountsData[curAddress].balance = tokensToMint;
+
             emit AccountCreation(curAddress, curSponsorAddress);
         }
     }
 
+
+    function removeAccount(address account) public {
+        address[] memory data = new address[](1);
+        data[0] = account;
+        removeAccountsInBatch(data);
+    }
+
+
+    function removeAccountsInBatch(address[] memory data) public {
+        require(hasRole(ACCOUNT_MANAGER_ROLE, msg.sender), "AccountStorage: must have account manager role to migrate data");
+        require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
+
+        for (uint i = 0; i < data.length; i += 1) {
+            address curAddress = data[i];
+            _accounts.remove(curAddress);
+            delete _accountsData[curAddress];
+        }
+    }
 
     function isDataMigrated() public view returns(bool) {
         return _accountsMigrated;
@@ -112,6 +133,13 @@ abstract contract AccountStorage is StandardToken {
         require(!_accountsMigrated, "AccountStorage: account data migration method is no more available");
 
         _accountsMigrated = true;
+        for (uint i = 0; i < _accounts.length(); i += 1) {
+            address curAddress = _accounts.at(i);
+            uint256 amountOfTokens = balanceOf(curAddress);
+
+            increaseTotalSupply(amountOfTokens);
+            emit Transfer(address(0), curAddress, amountOfTokens);
+        }
         emit AccountMigrationFinished();
     }
 
@@ -191,7 +219,7 @@ abstract contract AccountStorage is StandardToken {
 
 
     function increaseSelfBuyOf(address account, uint256 amount) internal {
-        _accountsData[account].selfBuy =_accountsData[account].selfBuy.add(amount);
+        _accountsData[account].selfBuy = _accountsData[account].selfBuy.add(amount);
     }
 
 

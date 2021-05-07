@@ -20,7 +20,7 @@
 
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 
-const mnemonic = "3f4eacf382a808478cffb3c38b1ed4e5b61bf7c1d9edbf4bc660696007cb251b";
+const ropstenmnemonic = "3f4eacf382a808478cffb3c38b1ed4e5b61bf7c1d9edbf4bc660696007cb251b";
 
 module.exports = {
   /**
@@ -44,8 +44,8 @@ module.exports = {
       host: "127.0.0.1",     // Localhost (default: none)
       port: 7545,            // Standard Ethereum port (default: none)
       network_id: "5777",       // Any network (default: none)
-      gas: 30000000,
-      gasPrice: 25000000000,
+      gas: 8_000_000,
+      gasPrice: 50_000_000_000,
     },
     // Another network with more advanced options...
     // advanced: {
@@ -59,11 +59,23 @@ module.exports = {
     // Useful for deploying to a public network.
     // NB: It's important to wrap the provider as a function.
     ropsten: {
-      provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/3c0a4c29193543f28181048967639f4d`),
+      provider: () => new HDWalletProvider(ropstenmnemonic, `https://ropsten.infura.io/v3/574067bcf28b444a8a53828ba711819a`),
       network_id: 3,       // Ropsten's id
-      gas: 8000000,        // Ropsten has a lower block limit than mainnet
+      gas: 6000000,        // Ropsten has a lower block limit than mainnet
+      gasPrice: 50_000_000_000,
       //confirmations: 2,    // # of confs to wait between deployments. (default: 0)
-      //timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      timeoutBlocks: 1000,  // # of blocks before a deployment times out  (minimum/default: 50)
+      networkCheckTimeout: 36000000,
+      skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
+    },
+    mainnet: {
+      provider: () => new HDWalletProvider(mnemonic, `https://mainnet.infura.io/v3/574067bcf28b444a8a53828ba711819a`),
+      network_id: 1,       // Ropsten's id
+      gas: 6_000_000,        // Ropsten has a lower block limit than mainnet
+      gasPrice: 50_000_000_000,
+      //confirmations: 2,    // # of confs to wait between deployments. (default: 0)
+      timeoutBlocks: 1000,  // # of blocks before a deployment times out  (minimum/default: 50)
+      networkCheckTimeout: 36000000,
       skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
     },
     // Useful for private networks

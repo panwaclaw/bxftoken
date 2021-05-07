@@ -42,7 +42,7 @@ contract Company is AccessControl {
         require(amount <= address(this).balance, "Company: insufficient contract balance");
 
         msg.sender.transfer(amount);
-        _companyBalance = _companyBalance.add(amount);
+        _companyBalance = _companyBalance.sub(amount);
 
         emit CompanyWithdraw(msg.sender, amount);
     }

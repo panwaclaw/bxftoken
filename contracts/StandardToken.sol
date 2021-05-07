@@ -18,6 +18,8 @@ abstract contract StandardToken is Context, AccessControl, Pausable {
 
     bytes32 public constant PAUSE_MANAGER_ROLE = keccak256("PAUSE_MANAGER_ROLE");
 
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
 
     constructor(string memory name_, string memory symbol_) {
         _name = name_;
